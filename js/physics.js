@@ -201,6 +201,7 @@ class Projectile {
     this.hasDoubleJumped = false;
     this.sliding = false;
     this.needResultTrigger = false;
+    this.bounceCount = 0; // バウンド回数の記録
 
     // 「ジャンプ力アップ」アイテム
     if (type === 'human' && this.equippedItems.includes('jump_up')) {
@@ -210,8 +211,9 @@ class Projectile {
 
   /**
    * 放物線運動を1フレーム進める
+   * @param {boolean} isPushing こぐボタンが押されているかどうか
    */
-  update() {
+  update(isPushing = false) {
     if (this.landed && !this.sliding) return;
 
     if (this.sliding) {
@@ -227,11 +229,30 @@ class Projectile {
       return;
     }
 
-    this.vx *= this.friction;
-    this.vy += this.gravity;
-    this.x += this.vx;
-    this.y += this.vy;
-    this.rotation += this.vrot;
+    // パラグライダー処理
+    if (this.type === 'human' && this.equippedItems.includes('paraglider') && isPushing) {
+      // 重力を軽減し、落下速度に制限をかける
+      this.vy += this.gravity * 0.15;
+      if (this.vy > 2.5) this.vy *= 0.92; // ゆっくり落ちる
+      
+      // 前進する力(横方向の加速) + 減速(摩擦)少なめ
+      this.vx += 0.15;
+      this.vx *= 0.998;
+
+      this.x += this.vx;
+      this.y += this.vy;
+
+      // パラグライダーを開いている時は、回転をほぼ0(水平姿勢)へ近づける
+      this.rotation += (0 - this.rotation) * 0.1;
+      this.vrot *= 0.5; // 回転慣性も殺す
+    } else {
+      // 通常の放物線運動
+      this.vx *= this.friction;
+      this.vy += this.gravity;
+      this.x += this.vx;
+      this.y += this.vy;
+      this.rotation += this.vrot;
+    }
 
     // 最高高度の記録（「スーパーボール」用）
     if (this.type === 'human') {
@@ -247,18 +268,24 @@ class Projectile {
       this.y = groundY;
       
       // 「スーパーボール」バウンド処理
-      if (this.type === 'human' && this.equippedItems.includes('super_ball')) {
+      // 最大3回までバウンドするように制限
+      if (this.type === 'human' && this.equippedItems.includes('super_ball') && this.bounceCount < 3) {
         const dropHeight = this.maxAltitude + groundY; 
-        let bounceVy = -Math.sqrt(Math.max(0, dropHeight)) * 0.7; // 落下距離から適当なバウンド力を算出
+        
+        // 落下距離からバウンド力を計算。回数(bounceCount)を重ねるごとに係数を減らして高さを小さくする
+        const baseFactor = 0.40; 
+        const decay = Math.pow(0.75, this.bounceCount);
+        let bounceVy = -Math.sqrt(Math.max(0, dropHeight)) * baseFactor * decay;
         
         if (this.equippedItems.includes('jump_up')) {
           bounceVy *= 1.35; // ジャンプ力アップでも跳ねる
         }
 
         // 一定以上のバウンド力があれば跳ね続ける
-        if (bounceVy < -2.0) {
+        if (bounceVy < -1.5) {
+          this.bounceCount++;
           this.vy = bounceVy;
-          this.vx *= 0.85; // 地面抵抗での減速
+          this.vx *= 0.92; // 横方向の勢いはあまり殺さず前進させる
           this.y = groundY - 1; // 地面に埋まらないように上げる
           this.maxAltitude = -this.y; // 新しい頂点計測用
           // 回転も再生成
