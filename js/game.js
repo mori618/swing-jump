@@ -263,28 +263,27 @@ class Game {
     if (this.state === STATE.FLYING || this.state === STATE.RESULT) {
       let primaryTarget = null;
       this.projectiles.forEach(p => {
-        if (!p.landed) {
-          p.update(this.isPushing);
-          if (p.checkLanding(this.groundY, this.startPivotX)) {
-            if (p.type === 'human') {
-              if (this.swingJumps === 1) {
-                // 着地後、再度ブランコに戻る（RESULTへは行かない）
-                this.pivotX = p.x;
-                this.state = STATE.SWINGING;
-                this.launchType = '';
-                this.projectiles = [];
-                this.pendulum = new Pendulum(this.pendulum.length);
-                this.isPushing = false;
-              } else {
-                this.state = STATE.RESULT;
-                this.ui.showResultScreen(p.dist, p.type);
-              }
-            } else if (this.launchType === 'shoe') {
+        p.update(this.isPushing);
+        if (p.checkLanding(this.groundY, this.startPivotX)) {
+          if (p.type === 'human') {
+            if (this.swingJumps === 1) {
+              // 着地後、再度ブランコに戻る（RESULTへは行かない）
+              this.pivotX = p.x;
+              this.state = STATE.SWINGING;
+              this.launchType = '';
+              this.projectiles = [];
+              this.pendulum = new Pendulum(this.pendulum.length);
+              this.isPushing = false;
+            } else {
               this.state = STATE.RESULT;
               this.ui.showResultScreen(p.dist, p.type);
             }
+          } else if (this.launchType === 'shoe') {
+            this.state = STATE.RESULT;
+            this.ui.showResultScreen(p.dist, p.type);
           }
         }
+        
         if (p.type === 'human') primaryTarget = p;
         else if (!primaryTarget) primaryTarget = p; // shoe falls back
       });
