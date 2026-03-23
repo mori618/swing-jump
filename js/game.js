@@ -128,20 +128,14 @@ class Game {
     this.isPushing = true;
     this.ui.guideTimer = 0;
     
-    if (this.pendulum.angularVelocity > 0 && this.pendulum.canPushBoost) {
-      this.pendulum.angularVelocity += PHYSICS_CONFIG.pushImpulse;
-      this.pendulum.canPushBoost = false;
-    }
+    this.pendulum.applyBoost(true);
   }
 
   stopPump() {
     if (this.state === STATE.RESULT || !this.isPushing) return;
     this.isPushing = false;
     
-    if (this.pendulum.angularVelocity < 0 && this.pendulum.canReleaseBoost) {
-      this.pendulum.angularVelocity -= PHYSICS_CONFIG.releaseImpulse;
-      this.pendulum.canReleaseBoost = false;
-    }
+    this.pendulum.applyBoost(false);
   }
 
   // ===== 飛ばすボタンのアクション =====
@@ -284,6 +278,8 @@ class Game {
         ctx.fill();
     }
 
+    this._drawClockGuide(ctx);
+
     // ===== 地面 =====
     ctx.fillStyle = '#94a3b8'; 
     ctx.fillRect(this.pivotX - 200000, this.groundY, 400000, 5000);
@@ -359,7 +355,114 @@ class Game {
     this.ui.draw(ctx, W, H, this.state, this._lastDt);
   }
 
-  
+  _drawClockGuide(ctx) {
+    if (this.state !== STATE.SWINGING && this.launchType !== 'shoe') return;
+    
+    const isCCW = this.pendulum.angularVelocity >= 0;
+    const r = this.pendulum.length;
+    
+    ctx.save();
+    ctx.translate(this.pivotX, this.pivotY);
+    
+    // 背景円盤
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 1.15, 0, Math.PI * 2);
+    ctx.fillStyle = isCCW ? 'rgba(59, 130, 246, 0.05)' : 'rgba(239, 68, 68, 0.05)';
+    ctx.fill();
+
+    // 補助円
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const drawSegment = (startA, endA, color, outerR, innerR) => {
+      ctx.beginPath();
+      const canvasStart = Math.PI / 2 - startA;
+      const canvasEnd = Math.PI / 2 - endA;
+      ctx.arc(0, 0, outerR, canvasEnd, canvasStart, false);
+      ctx.arc(0, 0, innerR, canvasStart, canvasEnd, true);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+    };
+
+    const colors = {
+      tinyAccel: 'rgba(56, 189, 248, 0.15)',
+      smallAccel: 'rgba(14, 165, 233, 0.3)',
+      normalAccel: 'rgba(37, 99, 235, 0.45)',
+      hugeAccel: 'rgba(79, 70, 229, 0.6)',
+      tinyBrake: 'rgba(253, 224, 71, 0.15)',
+      smallBrake: 'rgba(251, 146, 60, 0.3)',
+      normalBrake: 'rgba(239, 68, 68, 0.45)',
+      hugeBrake: 'rgba(185, 28, 28, 0.6)'
+    };
+
+    if (isCCW) {
+      // Push: outer ring
+      const p_o = r * 1.15, p_i = r * 1.0;
+      drawSegment(-2*Math.PI/3, -Math.PI/2, colors.smallAccel, p_o, p_i);
+      drawSegment(-Math.PI/2, -Math.PI/3, colors.normalAccel, p_o, p_i);
+      drawSegment(-Math.PI/3, -Math.PI/6, colors.hugeAccel, p_o, p_i);
+      drawSegment(-Math.PI/6, 0, colors.normalAccel, p_o, p_i);
+      drawSegment(0, Math.PI/2, colors.smallAccel, p_o, p_i);
+      drawSegment(Math.PI/2, Math.PI, colors.tinyAccel, p_o, p_i);
+      drawSegment(-Math.PI, -2*Math.PI/3, colors.tinyAccel, p_o, p_i);
+
+      // Release: inner ring
+      const r_o = r * 0.9, r_i = r * 0.75;
+      drawSegment(-2*Math.PI/3, 0, colors.smallBrake, r_o, r_i);
+      drawSegment(0, Math.PI/2, colors.normalBrake, r_o, r_i);
+      drawSegment(Math.PI/2, 5*Math.PI/6, colors.hugeBrake, r_o, r_i);
+      drawSegment(5*Math.PI/6, Math.PI, colors.tinyBrake, r_o, r_i);
+      drawSegment(-Math.PI, -2*Math.PI/3, colors.normalBrake, r_o, r_i);
+    } else {
+      // CW
+      // Push (Deceleration): outer ring
+      const o_o = r * 1.15, o_i = r * 1.0;
+      drawSegment(-5*Math.PI/6, -Math.PI/2, colors.hugeBrake, o_o, o_i);
+      drawSegment(-Math.PI, -5*Math.PI/6, colors.tinyBrake, o_o, o_i);
+      drawSegment(2*Math.PI/3, Math.PI, colors.normalBrake, o_o, o_i);
+      drawSegment(0, 2*Math.PI/3, colors.smallBrake, o_o, o_i);
+      drawSegment(-Math.PI/2, 0, colors.normalBrake, o_o, o_i);
+
+      // Release (Acceleration): inner ring
+      const i_o = r * 0.9, i_i = r * 0.75;
+      drawSegment(Math.PI/2, 2*Math.PI/3, colors.smallAccel, i_o, i_i);
+      drawSegment(Math.PI/3, Math.PI/2, colors.normalAccel, i_o, i_i);
+      drawSegment(Math.PI/6, Math.PI/3, colors.hugeAccel, i_o, i_i);
+      drawSegment(0, Math.PI/6, colors.normalAccel, i_o, i_i);
+      drawSegment(-Math.PI/2, 0, colors.smallAccel, i_o, i_i);
+      drawSegment(-Math.PI, -Math.PI/2, colors.tinyAccel, i_o, i_i);
+      drawSegment(2*Math.PI/3, Math.PI, colors.tinyAccel, i_o, i_i);
+    }
+
+    // 時計の文字盤（時間）
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = 'bold 16px "Nunito", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i = 1; i <= 12; i++) {
+      let hourA;
+      if (i === 12) hourA = Math.PI;
+      else if (i <= 6) hourA = Math.PI - i * (Math.PI / 6);
+      else hourA = - (i - 6) * (Math.PI / 6);
+      
+      const hX = Math.sin(hourA) * r * 1.25;
+      const hY = Math.cos(hourA) * r * 1.25;
+      ctx.fillText(i.toString(), hX, hY);
+    }
+
+    // ラベル
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.font = 'bold 12px "Nunito", sans-serif';
+    ctx.fillText('PUSH', 0, -r * 1.05);
+    ctx.fillText('RELEASE', 0, -r * 0.82);
+
+    ctx.restore();
+  }
+
   _drawMarker(ctx, p) {
     if (p.dist === 0) return;
     ctx.save();

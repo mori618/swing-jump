@@ -35,14 +35,106 @@ class Pendulum {
     this.canReleaseBoost = true;
   }
 
+  getNormalizedAngle() {
+    let a = this.angle % (Math.PI * 2);
+    if (a > Math.PI) a -= Math.PI * 2;
+    if (a < -Math.PI) a += Math.PI * 2;
+    if (a <= -Math.PI) a += Math.PI * 2;
+    return a;
+  }
+
   /**
    * 物理を1フレーム進める（参考コードはフレームベース駆動）
    */
   update() {
     let angularAcceleration = -(PHYSICS_CONFIG.gravity / this.length) * Math.sin(this.angle);
+    
+    // パッシブ効果：左半分で加速、右半分で減速
+    const ang = this.getNormalizedAngle(); // -PI to PI
+    if (this.angularVelocity > 0) { // 左回転(CCW)
+      if (ang < 0) {
+        angularAcceleration += 0.0015; // 左半分で加速
+      } else {
+        angularAcceleration -= 0.0015; // 右半分で減速
+      }
+    } else if (this.angularVelocity < 0) { // 右回転(CW)
+      if (ang > 0) {
+        angularAcceleration -= 0.0015; // 右半分で加速 (CWではマイナス方向が加速)
+      } else {
+        angularAcceleration += 0.0015; // 左半分で減速
+      }
+    }
+
     this.angularVelocity += angularAcceleration;
     this.angularVelocity *= PHYSICS_CONFIG.friction;
     this.angle += this.angularVelocity;
+  }
+
+  /**
+   * 指定された角度領域に応じてブースト（加速・減速）を適用する
+   */
+  applyBoost(isPush) {
+    const ang = this.getNormalizedAngle();
+    const isCCW = this.angularVelocity >= 0;
+
+    const TINY = 0.010;
+    const SMALL = 0.018;
+    const NORMAL = 0.026;
+    const HUGE = 0.045;
+
+    let impulse = 0;
+
+    if (isCCW) {
+      if (isPush) {
+        if (ang >= -2 * Math.PI / 3 && ang < -Math.PI / 2) impulse = SMALL;
+        else if (ang >= -Math.PI / 2 && ang < -Math.PI / 3) impulse = NORMAL;
+        else if (ang >= -Math.PI / 3 && ang < -Math.PI / 6) impulse = HUGE;
+        else if (ang >= -Math.PI / 6 && ang < 0) impulse = NORMAL;
+        else if (ang >= 0 && ang < Math.PI / 2) impulse = SMALL;
+        else impulse = TINY;
+        
+        if (this.canPushBoost) {
+          this.angularVelocity += impulse;
+          this.canPushBoost = false;
+        }
+      } else {
+        if (ang >= -2 * Math.PI / 3 && ang < 0) impulse = -SMALL;
+        else if (ang >= 0 && ang < Math.PI / 2) impulse = -NORMAL;
+        else if (ang >= Math.PI / 2 && ang < 5 * Math.PI / 6) impulse = -NORMAL * 1.5;
+        else if (ang >= 5 * Math.PI / 6 && ang <= Math.PI) impulse = -TINY;
+        else impulse = -NORMAL;
+
+        if (this.canReleaseBoost) {
+           this.angularVelocity += impulse;
+           this.canReleaseBoost = false;
+        }
+      }
+    } else { // CW
+      if (!isPush) {
+        if (ang <= 2 * Math.PI / 3 && ang > Math.PI / 2) impulse = -SMALL;
+        else if (ang <= Math.PI / 2 && ang > Math.PI / 3) impulse = -NORMAL;
+        else if (ang <= Math.PI / 3 && ang > Math.PI / 6) impulse = -HUGE;
+        else if (ang <= Math.PI / 6 && ang > 0) impulse = -NORMAL;
+        else if (ang <= 0 && ang > -Math.PI / 2) impulse = -SMALL;
+        else impulse = -TINY;
+
+        if (this.canReleaseBoost) {
+          this.angularVelocity += impulse;
+          this.canReleaseBoost = false;
+        }
+      } else {
+        if (ang <= -Math.PI / 2 && ang > -5 * Math.PI / 6) impulse = NORMAL * 1.5;
+        else if (ang <= -5 * Math.PI / 6 && ang > -Math.PI - 0.01) impulse = TINY;
+        else if (ang <= Math.PI && ang > 2 * Math.PI / 3) impulse = NORMAL;
+        else if (ang <= 2 * Math.PI / 3 && ang > 0) impulse = SMALL;
+        else impulse = NORMAL;
+
+        if (this.canPushBoost) {
+          this.angularVelocity += impulse;
+          this.canPushBoost = false;
+        }
+      }
+    }
   }
 
   /**
