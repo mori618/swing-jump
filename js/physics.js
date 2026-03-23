@@ -96,7 +96,8 @@ class Pendulum {
         else impulse = TINY;
         
         if (this.canPushBoost) {
-          this.angularVelocity += impulse * boostMultiplier;
+          const actualImpulse = impulse > 0 ? impulse * boostMultiplier : impulse;
+          this.angularVelocity += actualImpulse;
           this.canPushBoost = false;
         }
       } else {
@@ -107,7 +108,8 @@ class Pendulum {
         else impulse = -NORMAL;
 
         if (this.canReleaseBoost) {
-           this.angularVelocity += impulse * boostMultiplier;
+           const actualImpulse = impulse > 0 ? impulse * boostMultiplier : impulse;
+           this.angularVelocity += actualImpulse;
            this.canReleaseBoost = false;
         }
       }
@@ -121,7 +123,8 @@ class Pendulum {
         else impulse = -TINY;
 
         if (this.canReleaseBoost) {
-          this.angularVelocity += impulse * boostMultiplier;
+          const actualImpulse = impulse < 0 ? impulse * boostMultiplier : impulse;
+          this.angularVelocity += actualImpulse;
           this.canReleaseBoost = false;
         }
       } else {
@@ -132,7 +135,8 @@ class Pendulum {
         else impulse = NORMAL;
 
         if (this.canPushBoost) {
-          this.angularVelocity += impulse * boostMultiplier;
+          const actualImpulse = impulse < 0 ? impulse * boostMultiplier : impulse;
+          this.angularVelocity += actualImpulse;
           this.canPushBoost = false;
         }
       }

@@ -114,8 +114,7 @@ class GameUI {
       this.displayCoins = targetCoins;
     }
 
-    // ===== パワーゲージ =====
-    this._drawPowerGauge(ctx, canvasWidth);
+    // ===== パワーゲージ不要のため削除 =====
 
     // ===== HUD（左: BEST距離 / 右: コイン） =====
     this._drawHUD(ctx, canvasWidth);
