@@ -80,45 +80,29 @@ class Game {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
 
-    // 支点を画面中央やや上に下げる（回転時に見切れないように 28% -> 45%）
+    // 支点を画面中央やや上に下げる（参考コード準拠: 0.35）
     this.pivotX = this.canvas.width / 2;
-    this.pivotY = this.canvas.height * 0.45;
+    this.pivotY = this.canvas.height * 0.35;
     
     // pendulum が存在する場合はロープ長も更新
-    const ropeLen = Math.min(this.canvas.width, this.canvas.height) * 0.28;
+    const ropeLen = Math.min(this.canvas.width, this.canvas.height) * 0.35;
     
     // 地面はロープ長 ＋ キャラクター沈み込み分 ＋ 余白
-    this.groundY = this.pivotY + ropeLen + 80;
+    this.groundY = this.pivotY + ropeLen + 65;
     
     if (this.pendulum) {
-      this.pendulum.baseLength = ropeLen;
+      this.pendulum.length = ropeLen;
     }
   }
 
   // ===== 背景オブジェクト生成 =====
   _generateBackground() {
-    // 雲（広い範囲に）
-    this.clouds = Array.from({ length: 12 }, (_, i) => ({
-      x: i * 500 - 1000 + Math.random() * 200,
-      y: 60 + Math.random() * 120,
-      r: 35 + Math.random() * 30,
-    }));
-    // 木（遠くまで）
-    this.trees = Array.from({ length: 30 }, (_, i) => ({
-      x: i * 300 - 600 + Math.random() * 100,
-      y: 0,
-      height: 60 + Math.random() * 50,
-    }));
-    // 地面装飾（草）
-    this.grasses = Array.from({ length: 60 }, (_, i) => ({
-      x: i * 200 - 1200,
-      size: 8 + Math.random() * 6,
-    }));
+    // 参考コードでは固定ループでクラウドを描画しているため、ランダム生成は不要になりました
   }
 
   // ===== ゲームリセット =====
   reset() {
-    const ropeLen = Math.min(this.canvas.width, this.canvas.height) * 0.28;
+    const ropeLen = Math.min(this.canvas.width, this.canvas.height) * 0.35;
     this.pendulum = new Pendulum(ropeLen);
     this.state = STATE.SWINGING;
     this.projectiles = [];
@@ -281,10 +265,8 @@ class Game {
 
     // ===== 空背景（グラデーション） =====
     const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
-    skyGrad.addColorStop(0, '#5BA8E5');
-    skyGrad.addColorStop(0.5, '#87CEEB');
-    skyGrad.addColorStop(0.85, '#E0F4FF');
-    skyGrad.addColorStop(1, '#B8E4C9');
+    skyGrad.addColorStop(0, '#bfdbfe'); // bg-blue-200
+    skyGrad.addColorStop(1, '#eff6ff'); // bg-blue-50
     ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, W, H);
 
@@ -294,58 +276,60 @@ class Game {
     ctx.scale(this.cam.zoom, this.cam.zoom);
     ctx.translate(-W / 2 - this.cam.x, -H / 2 - this.cam.y);
 
-    // ===== 雲 =====
-    this.clouds.forEach(cloud => {
-      // 画面外になったら右に再配置（無限スクロール）
-      const screenLeft = this.cam.x - W;
-      if (cloud.x + cloud.r * 3 < screenLeft) {
-        cloud.x += 6000;
-      }
-      this._drawCloud(ctx, cloud.x, cloud.y, cloud.r);
-    });
-
-    // ===== 木 =====
-    this.trees.forEach(tree => {
-      const screenLeft = this.cam.x - W;
-      if (tree.x + 60 < screenLeft) {
-        tree.x += 9000;
-      }
-      this._drawTree(ctx, tree.x, this.groundY, tree.height);
-    });
+    // ===== 背景装飾（雲のような半透明円形） =====
+    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    for(let i = -15; i < 50; i++) {
+        ctx.beginPath();
+        ctx.arc(i * 900 + 400, -600 + Math.sin(i) * 250, 300, 0, Math.PI * 2);
+        ctx.fill();
+    }
 
     // ===== 地面 =====
-    // 広い地面帯（参考コード: cameraX-200000 〜 +400000）
-    ctx.fillStyle = '#5D9E4B';
-    ctx.fillRect(this.cam.x - 200000, this.groundY, 400000, 5000);
-    ctx.fillStyle = '#4A8038';
-    ctx.fillRect(this.cam.x - 200000, this.groundY, 400000, 14);
-
-    // ブランコ真下の特別な踏み台
-    ctx.fillStyle = '#cbd5e1';
-    ctx.fillRect(this.pivotX - 200, this.groundY, 400, 12);
+    ctx.fillStyle = '#94a3b8'; 
+    ctx.fillRect(this.pivotX - 200000, this.groundY, 400000, 5000);
+    
+    // 踏み台（少し明るめ）
+    ctx.fillStyle = '#cbd5e1'; 
+    ctx.fillRect(this.pivotX - 200, this.groundY, 400, 10);
 
     // ===== 距離マーカー =====
-    if (this.state !== STATE.SWINGING) {
-      this._drawDistanceMarkers(ctx);
+    ctx.fillStyle = "rgba(0,0,0,0.15)";
+    ctx.font = "bold 24px sans-serif";
+    for(let m = -1000; m <= 40000; m += 20) {
+        const mx = this.pivotX + (m / PHYSICS_CONFIG.meterScale);
+        ctx.fillRect(mx, this.groundY, 3, 30);
+        if (m % 100 === 0) {
+            ctx.font = "bold 32px sans-serif";
+            ctx.fillText(`${m}m`, mx + 8, this.groundY + 45);
+            ctx.font = "bold 24px sans-serif";
+        }
     }
 
     // ===== ブランコの支柱 =====
-    this._drawSwingFrame(ctx);
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 12;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(this.pivotX - 120, this.groundY + 100);
+    ctx.lineTo(this.pivotX, this.pivotY);
+    ctx.lineTo(this.pivotX + 120, this.groundY + 100);
+    ctx.stroke();
 
-    // ===== ロープ =====
+    // ===== ロープとキャラクター（ブランコ乗車中） =====
     if (this.launchType !== 'human') {
-      const seat = this.pendulum.getSeatPosition(this.pivotX, this.pivotY);
+      const seatX = this.pivotX + Math.sin(this.pendulum.angle) * this.pendulum.length;
+      const seatY = this.pivotY + Math.cos(this.pendulum.angle) * this.pendulum.length;
 
       ctx.strokeStyle = '#64748b';
       ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.moveTo(this.pivotX, this.pivotY);
-      ctx.lineTo(seat.x, seat.y);
+      ctx.lineTo(seatX, seatY);
       ctx.stroke();
 
       this.character.legExtended = this.isPushing;
       const hasShoe = !this.projectiles.some(p => p.type === 'shoe');
-      this.character.drawOnSwing(seat.x, seat.y, this.pendulum.angle, this.pivotX, this.pivotY, hasShoe);
+      this.character.drawOnSwing(seatX, seatY, this.pendulum.angle, this.pivotX, this.pivotY, hasShoe, this.pendulum.length);
     }
 
     ctx.fillStyle = '#334155';
@@ -357,13 +341,13 @@ class Game {
     this.projectiles.forEach(p => {
       if (p.type === 'human') {
         if (!p.landed) {
-          this.character.drawFlying(p.x, p.y, p.vx, p.vy, p.rotation, false);
+          this.character.drawFlying(p.x, p.y, p.vx, p.vy, p.rotation, false, this.pendulum.length);
         } else {
-          this.character.drawLanded(p.x, p.y);
-          this._drawMarker(ctx, p);
+          this.character.drawLanded(p.x, p.y, p.rotation, this.pendulum.length);
+          if (this.launchType === 'human') this._drawMarker(ctx, p);
         }
       } else if (p.type === 'shoe') {
-        this.character.drawShoe(p.x, p.y, p.rotation, 1.3);
+        this.character.drawShoe(p.x, p.y, p.rotation, this.pendulum.length / 200);
         if (p.landed && this.launchType === 'shoe') {
           this._drawMarker(ctx, p);
         }
@@ -374,6 +358,7 @@ class Game {
 
     this.ui.draw(ctx, W, H, this.state, this._lastDt);
   }
+
   
   _drawMarker(ctx, p) {
     if (p.dist === 0) return;
@@ -387,88 +372,5 @@ class Game {
     ctx.restore();
   }
 
-  // ===== ブランコ支柱の描画（A字型） =====
-  _drawSwingFrame(ctx) {
-    const px = this.pivotX;
-    const py = this.pivotY;
-    const baseHalf = 130;
-
-    // 左柱
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 12;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(px - baseHalf, this.groundY + 100);
-    ctx.lineTo(px, py);
-    ctx.stroke();
-
-    // 右柱
-    ctx.beginPath();
-    ctx.moveTo(px + baseHalf, this.groundY + 100);
-    ctx.lineTo(px, py);
-    ctx.stroke();
-  }
-
-  // ===== 雲の描画 =====
-  _drawCloud(ctx, x, y, r) {
-    ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.arc(x + r * 0.9, y - r * 0.3, r * 0.7, 0, Math.PI * 2);
-    ctx.arc(x + r * 1.6, y, r * 0.6, 0, Math.PI * 2);
-    ctx.arc(x - r * 0.6, y + r * 0.1, r * 0.65, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  // ===== 木の描画 =====
-  _drawTree(ctx, x, groundY, h) {
-    ctx.save();
-    // 幹
-    ctx.fillStyle = '#7B5A3A';
-    ctx.fillRect(x - 5, groundY - h * 0.35, 10, h * 0.35);
-    // 葉（三角形3層）
-    ctx.fillStyle = '#3A7D44';
-    for (let i = 0; i < 3; i++) {
-      ctx.beginPath();
-      ctx.moveTo(x, groundY - h - i * 15);
-      ctx.lineTo(x - 28 + i * 6, groundY - h * 0.55 - i * 15);
-      ctx.lineTo(x + 28 - i * 6, groundY - h * 0.55 - i * 15);
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.restore();
-  }
-
-  // ===== 距離マーカーの描画（参考コード準拠の広域版） =====
-  _drawDistanceMarkers(ctx) {
-    const startX = this.pivotX; // ブランコの起点X（飛び出し地点）
-    const ppm = this.PIXELS_PER_METER;
-
-    // 可視範囲を計算してマーカーの描画範囲を制限（パフォーマンス）
-    const visLeft = this.cam.x - this.canvas.width;
-    const visRight = this.cam.x + this.canvas.width * 2;
-
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.18)';
-
-    // 20m間隔のメインマーカー
-    for (let m = -20; m <= 40000; m += 20) {
-      const mx = startX + m * ppm;
-      if (mx < visLeft || mx > visRight) continue;
-
-      // 縦棒
-      ctx.fillRect(mx, this.groundY, 3, 30);
-
-      // 100m 毎に大きなラベル
-      if (m % 100 === 0) {
-        ctx.font = 'bold 30px "Nunito", sans-serif';
-        ctx.textAlign = 'left';
-        ctx.fillText(`${m}m`, mx + 8, this.groundY + 44);
-      }
-    }
-
-    ctx.restore();
-  }
+  // 距離マーカーや背景描画の個別メソッドは _draw 内に統合したため削除
 }
