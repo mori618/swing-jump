@@ -242,7 +242,7 @@ class GameUI {
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(0,0,0,0.6)';
     ctx.shadowBlur = 6;
-    ctx.fillText('🎉 結果発表 🎉', W / 2, cardY + 42);
+    ctx.fillText('🎉 着地成功！', W / 2, cardY + 42);
 
     // 距離
     ctx.fillStyle = 'white';
@@ -252,16 +252,18 @@ class GameUI {
     ctx.fillStyle = 'rgba(255,255,255,0.8)';
     ctx.fillText('メートル', W / 2, cardY + 130);
 
-    // 新記録バッジ OR ベスト表示
-    if (this.isNewRecord) {
-      ctx.fillStyle = '#FF6D00';
-      ctx.font = 'bold 17px "Nunito", sans-serif';
-      ctx.fillText('🌟 新記録！', W / 2, cardY + 158);
-    } else {
-      ctx.fillStyle = 'rgba(255,255,255,0.55)';
-      ctx.font = '13px "Nunito", sans-serif';
-      ctx.fillText(`ベスト: ${this.save.bestDistance.toFixed(1)} m`, W / 2, cardY + 158);
-    }
+    // ランクメッセージ
+    const dist = this.resultDistance;
+    let rankMsg;
+    if (dist < 0)        rankMsg = '逆噴射！？背中から落ちた！';
+    else if (dist > 300) rankMsg = '大気圏突破！空の果てへ！🚀';
+    else if (dist > 150) rankMsg = '大空の覇者！素晴らしいジャンプ！';
+    else if (dist > 60)  rankMsg = 'ナイス着地！体操選手並みの安定感！';
+    else                 rankMsg = 'もっとスイングを極めて高く飛ぼう！';
+
+    ctx.fillStyle = this.isNewRecord ? '#FF6D00' : 'rgba(255,255,255,0.75)';
+    ctx.font = this.isNewRecord ? 'bold 16px "Nunito", sans-serif' : '14px "Nunito", sans-serif';
+    ctx.fillText(this.isNewRecord ? `🌟 新記録！ ${rankMsg}` : rankMsg, W / 2, cardY + 158);
 
     // コイン獲得表示（仕切り線）
     ctx.strokeStyle = 'rgba(255,255,255,0.2)';

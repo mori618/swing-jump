@@ -34,9 +34,8 @@ class Pendulum {
    */
   update(dt) {
     // 脚の伸ばしによるエネルギーポンピング（実効ロープ長の変化）
-    // 振り子が最下点付近かつ脚を伸ばすと有効長が増加 → その後縮めると位置エネルギー増加
     const targetLength = this.legExtended
-      ? this.baseLength + 40  // 脚を伸ばすと重心が下がりロープ実効長増加
+      ? this.baseLength + 40
       : this.baseLength;
 
     // 実効長を滑らかに変化させる
@@ -82,23 +81,22 @@ class Pendulum {
 
   /**
    * 現在の速度ベクトル（飛行開始時の初速）を取得する
-   * @param {number} pivotX 支点X
-   * @param {number} pivotY 支点Y
+   * 参考コード準拠: vx = cos(θ) * ω * L, vy = -sin(θ) * ω * L - |ω| * boostFactor
+   * @param {number} boostFactor 上方向ブースト係数（デフォルト14）
    * @returns {{vx: number, vy: number}}
    */
-  getVelocity(pivotX, pivotY) {
-    // 座席は円弧上を動く → 速度は接線方向
-    // 接線方向 = (-cos(θ), sin(θ)) に角速度×長さ をかける
+  getVelocity(boostFactor = 14) {
     const speed = this.angularVelocity * this.length;
-    return {
-      vx: speed * (-Math.cos(this.angle)),  // X成分
-      vy: speed * Math.sin(this.angle),     // Y成分（上方向が負）
-    };
+    // 接線方向の速度 + 上方向ブースト
+    const vx = Math.cos(this.angle) * speed;
+    const vy = -Math.sin(this.angle) * speed - Math.abs(this.angularVelocity) * boostFactor;
+    return { vx, vy };
   }
 }
 
 /**
  * キャラクターが飛んでいるときの放物線物理状態を管理するクラス
+ * 参考コードに合わせて回転・空気抵抗フィールドを追加
  */
 class Projectile {
   /**
@@ -107,14 +105,22 @@ class Projectile {
    * @param {number} vx 初速X成分
    * @param {number} vy 初速Y成分（上向き負）
    * @param {number} gravity 重力加速度（px/s²）
+   * @param {number} initialAngle 飛び出し時の振り子角度（回転初期値に使用）
    */
-  constructor(x, y, vx, vy, gravity) {
+  constructor(x, y, vx, vy, gravity, initialAngle = 0) {
     this.x = x;
     this.y = y;
     this.vx = vx;
     this.vy = vy;
     this.gravity = gravity;
     this.startX = x;  // 飛び出し開始X（距離計算用）
+
+    // 空中回転
+    this.rotation = -initialAngle;  // 初期回転（振り子の角度から）
+    this.vrot = 0;                  // 回転角速度（rad/s で更新）
+
+    // 空気抵抗（参考コードの friction 相当、dt版）
+    this.airFriction = 0.35; // 毎秒の減衰率（exp(-airFriction*dt)を掛ける）
   }
 
   /**
@@ -122,9 +128,16 @@ class Projectile {
    * @param {number} dt タイムステップ（秒）
    */
   update(dt) {
+    // 空気抵抗
+    const decay = Math.exp(-this.airFriction * dt);
+    this.vx *= decay;
+
     this.vy += this.gravity * dt; // 重力加速
     this.x += this.vx * dt;
     this.y += this.vy * dt;
+
+    // 空中回転を更新
+    this.rotation += this.vrot * dt;
   }
 
   /**
