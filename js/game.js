@@ -358,16 +358,15 @@ class Game {
   _drawClockGuide(ctx) {
     if (this.state !== STATE.SWINGING && this.launchType !== 'shoe') return;
     
-    const isCCW = this.pendulum.angularVelocity >= 0;
     const r = this.pendulum.length;
     
     ctx.save();
     ctx.translate(this.pivotX, this.pivotY);
     
-    // 背景円盤
+    // 背景円盤（常に左回転時の色に固定）
     ctx.beginPath();
     ctx.arc(0, 0, r * 1.15, 0, Math.PI * 2);
-    ctx.fillStyle = isCCW ? 'rgba(59, 130, 246, 0.05)' : 'rgba(239, 68, 68, 0.05)';
+    ctx.fillStyle = 'rgba(59, 130, 246, 0.05)'; 
     ctx.fill();
 
     // 補助円
@@ -399,44 +398,24 @@ class Game {
       hugeBrake: 'rgba(185, 28, 28, 0.6)'
     };
 
-    if (isCCW) {
-      // Push: outer ring
-      const p_o = r * 1.15, p_i = r * 1.0;
-      drawSegment(-2*Math.PI/3, -Math.PI/2, colors.smallAccel, p_o, p_i);
-      drawSegment(-Math.PI/2, -Math.PI/3, colors.normalAccel, p_o, p_i);
-      drawSegment(-Math.PI/3, -Math.PI/6, colors.hugeAccel, p_o, p_i);
-      drawSegment(-Math.PI/6, 0, colors.normalAccel, p_o, p_i);
-      drawSegment(0, Math.PI/2, colors.smallAccel, p_o, p_i);
-      drawSegment(Math.PI/2, Math.PI, colors.tinyAccel, p_o, p_i);
-      drawSegment(-Math.PI, -2*Math.PI/3, colors.tinyAccel, p_o, p_i);
+    // 常に左回転時（CCW）のメーターを表示する
+    // Push: outer ring
+    const p_o = r * 1.15, p_i = r * 1.0;
+    drawSegment(-2*Math.PI/3, -Math.PI/2, colors.smallAccel, p_o, p_i);
+    drawSegment(-Math.PI/2, -Math.PI/3, colors.normalAccel, p_o, p_i);
+    drawSegment(-Math.PI/3, -Math.PI/6, colors.hugeAccel, p_o, p_i);
+    drawSegment(-Math.PI/6, 0, colors.normalAccel, p_o, p_i);
+    drawSegment(0, Math.PI/2, colors.smallAccel, p_o, p_i);
+    drawSegment(Math.PI/2, Math.PI, colors.tinyAccel, p_o, p_i);
+    drawSegment(-Math.PI, -2*Math.PI/3, colors.tinyAccel, p_o, p_i);
 
-      // Release: inner ring
-      const r_o = r * 0.9, r_i = r * 0.75;
-      drawSegment(-2*Math.PI/3, 0, colors.smallBrake, r_o, r_i);
-      drawSegment(0, Math.PI/2, colors.normalBrake, r_o, r_i);
-      drawSegment(Math.PI/2, 5*Math.PI/6, colors.hugeBrake, r_o, r_i);
-      drawSegment(5*Math.PI/6, Math.PI, colors.tinyBrake, r_o, r_i);
-      drawSegment(-Math.PI, -2*Math.PI/3, colors.normalBrake, r_o, r_i);
-    } else {
-      // CW
-      // Push (Deceleration): outer ring
-      const o_o = r * 1.15, o_i = r * 1.0;
-      drawSegment(-5*Math.PI/6, -Math.PI/2, colors.hugeBrake, o_o, o_i);
-      drawSegment(-Math.PI, -5*Math.PI/6, colors.tinyBrake, o_o, o_i);
-      drawSegment(2*Math.PI/3, Math.PI, colors.normalBrake, o_o, o_i);
-      drawSegment(0, 2*Math.PI/3, colors.smallBrake, o_o, o_i);
-      drawSegment(-Math.PI/2, 0, colors.normalBrake, o_o, o_i);
-
-      // Release (Acceleration): inner ring
-      const i_o = r * 0.9, i_i = r * 0.75;
-      drawSegment(Math.PI/2, 2*Math.PI/3, colors.smallAccel, i_o, i_i);
-      drawSegment(Math.PI/3, Math.PI/2, colors.normalAccel, i_o, i_i);
-      drawSegment(Math.PI/6, Math.PI/3, colors.hugeAccel, i_o, i_i);
-      drawSegment(0, Math.PI/6, colors.normalAccel, i_o, i_i);
-      drawSegment(-Math.PI/2, 0, colors.smallAccel, i_o, i_i);
-      drawSegment(-Math.PI, -Math.PI/2, colors.tinyAccel, i_o, i_i);
-      drawSegment(2*Math.PI/3, Math.PI, colors.tinyAccel, i_o, i_i);
-    }
+    // Release: inner ring
+    const r_o = r * 0.9, r_i = r * 0.75;
+    drawSegment(-2*Math.PI/3, 0, colors.smallBrake, r_o, r_i);
+    drawSegment(0, Math.PI/2, colors.normalBrake, r_o, r_i);
+    drawSegment(Math.PI/2, 5*Math.PI/6, colors.hugeBrake, r_o, r_i);
+    drawSegment(5*Math.PI/6, Math.PI, colors.tinyBrake, r_o, r_i);
+    drawSegment(-Math.PI, -2*Math.PI/3, colors.normalBrake, r_o, r_i);
 
     // 時計の文字盤（時間）
     ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
