@@ -44,7 +44,7 @@ class Game {
     this.targetCameraX = 0;
 
     // --- 各モジュールの初期化 ---
-    this.pendulum = new Pendulum(180, this.GRAVITY);
+    this.pendulum = new Pendulum(120, this.GRAVITY); // ロープ長120px
     this.character = new Character(this.ctx);
     this.save = new SaveManager();         // セーブ管理
     this.ui = new GameUI(this.save);       // UIにセーブマネージャーを渡す
@@ -75,7 +75,8 @@ class Game {
     this.canvas.height = window.innerHeight;
     this.groundY = this.canvas.height - 80;
     this.pivotX = this.canvas.width / 2;
-    this.pivotY = 60;
+    // 支点は地面から220px上（A字型ブランコの適切な高さ）
+    this.pivotY = this.groundY - 220;
   }
 
   // ===== 背景オブジェクト生成 =====
@@ -101,7 +102,7 @@ class Game {
 
   // ===== ゲームリセット =====
   reset() {
-    this.pendulum = new Pendulum(180, this.GRAVITY);
+    this.pendulum = new Pendulum(120, this.GRAVITY); // ロープ長120px
     this.pendulum.angle = Math.PI * 0.5;
     this.pendulum.angularVelocity = 0;
     this.state = STATE.SWINGING;
@@ -276,35 +277,36 @@ class Game {
     this.ui.draw(ctx, W, H, this.state, this._lastDt);
   }
 
-  // ===== ブランコ支柱の描画 =====
+  // ===== ブランコ支柱の描画（A字型） =====
   _drawSwingFrame(ctx) {
     const px = this.pivotX;
     const py = this.pivotY;
+    const baseHalf = 120; // 足元の左右幅（山底の半分）
 
-    // 左柱
+    // 左斥
     ctx.strokeStyle = '#7B4F2E';
-    ctx.lineWidth = 8;
+    ctx.lineWidth = 9;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(px - 80, this.groundY);
+    ctx.moveTo(px - baseHalf, this.groundY);
     ctx.lineTo(px, py);
     ctx.stroke();
 
-    // 右柱
+    // 右斥
     ctx.beginPath();
-    ctx.moveTo(px + 80, this.groundY);
+    ctx.moveTo(px + baseHalf, this.groundY);
     ctx.lineTo(px, py);
     ctx.stroke();
 
-    // 横梁
+    // 地面側の横演射（山底を結ぶ）
     ctx.strokeStyle = '#6B3A2A';
     ctx.lineWidth = 10;
     ctx.beginPath();
-    ctx.moveTo(px - 80, this.groundY);
-    ctx.lineTo(px + 80, this.groundY);
+    ctx.moveTo(px - baseHalf, this.groundY);
+    ctx.lineTo(px + baseHalf, this.groundY);
     ctx.stroke();
 
-    // 支点の丸
+    // 頂点（支点）の丸キャップ
     ctx.fillStyle = '#5D2E1A';
     ctx.beginPath();
     ctx.arc(px, py, 8, 0, Math.PI * 2);
