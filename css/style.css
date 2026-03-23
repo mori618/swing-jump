@@ -30,46 +30,41 @@ html, body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ===== ゲームキャンバス ===== */
 #gameCanvas {
   display: block;
   width: 100%;
-  height: 100%;
+  height: 66.666vh;
   touch-action: none;
 }
 
 /* ===== ボタンエリア（画面下部に固定） ===== */
 #buttonArea {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: relative;
+  width: 100%;
+  height: 33.334vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 12px 16px 20px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent);
+  padding: 16px;
+  background: #111122;
   /* iOS セーフエリア対応 */
-  padding-bottom: max(20px, env(safe-area-inset-bottom));
-  pointer-events: none; /* コンテナ自体はクリック透過 */
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
 }
 
 /* ===== ボタンコンテナ ===== */
 #buttonContainer {
   width: 100%;
+  height: 100%;
   max-width: 400px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-/* ===== 打ち上げボタンコンテナ ===== */
-.launch-buttons {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: center;
+  gap: 16px;
 }
 
 /* ===== ボタン共通スタイル上書き ===== */
@@ -77,19 +72,19 @@ html, body {
   pointer-events: all; /* ボタン自体はクリック受付 */
   width: 100%;
   max-width: none;
-  height: 64px;
+  flex: 1;
+  min-height: 64px;
   border: none;
   border-radius: 16px;
   font-family: 'Nunito', sans-serif;
   font-weight: 900;
-  font-size: 16px;
   letter-spacing: 0.02em;
   cursor: pointer;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
   transition:
     transform 0.08s ease,
     background-color 0.1s ease,
@@ -99,15 +94,6 @@ html, body {
   outline: none;
   position: relative;
   overflow: hidden;
-}
-.launch-buttons .game-btn {
-  flex-direction: column;
-  gap: 2px;
-  height: 72px;
-  font-size: 14px;
-}
-.launch-buttons .game-btn .btn-icon {
-  font-size: 24px;
 }
 
 /* ===== 警告テキスト ===== */
@@ -175,13 +161,14 @@ html, body {
 
 /* ===== ボタンのアイコン部分 ===== */
 .btn-icon {
-  font-size: 26px;
+  font-size: 36px;
   line-height: 1;
 }
 
 /* ===== ボタンのテキスト ===== */
 .btn-label {
   font-weight: 700;
+  font-size: 28px;
   line-height: 1;
   opacity: 0.95;
 }

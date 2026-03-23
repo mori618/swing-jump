@@ -78,7 +78,7 @@ class Game {
   // ===== リサイズ処理 =====
   _resize() {
     this.canvas.width = window.innerWidth;
-    this.canvas.height = window.innerHeight;
+    this.canvas.height = window.innerHeight * (2 / 3);
 
     // 支点を画面中央やや上に下げる（参考コード準拠: 0.35）
     this.pivotX = this.canvas.width / 2;
