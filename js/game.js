@@ -46,7 +46,8 @@ class Game {
     // --- 各モジュールの初期化 ---
     this.pendulum = new Pendulum(180, this.GRAVITY);
     this.character = new Character(this.ctx);
-    this.ui = new GameUI();
+    this.save = new SaveManager();         // セーブ管理
+    this.ui = new GameUI(this.save);       // UIにセーブマネージャーを渡す
     this.ui.resetGuide();
 
     // --- ゲームステート ---
@@ -157,6 +158,7 @@ class Game {
     if (!this.lastTime) this.lastTime = timestamp;
     const dt = Math.min((timestamp - this.lastTime) / 1000, 0.05); // 最大50ms
     this.lastTime = timestamp;
+    this._lastDt = dt; // UI描画用に保持
 
     this._update(dt);
     this._draw();
@@ -187,6 +189,7 @@ class Game {
 
       // 着地判定
       if (this.projectile.hasLanded(this.groundY)) {
+        this.projectile.y = this.groundY; // 地面にスナップ
         this.state = STATE.RESULT;
         this.ui.showResultScreen(dist);
       }
@@ -270,7 +273,7 @@ class Game {
     ctx.restore(); // カメラオフセット終了
 
     // ===== UI（カメラの影響を受けない） =====
-    this.ui.draw(ctx, W, H, this.state);
+    this.ui.draw(ctx, W, H, this.state, this._lastDt);
   }
 
   // ===== ブランコ支柱の描画 =====
