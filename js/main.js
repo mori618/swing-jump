@@ -53,6 +53,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnPump) {
     const onPumpStart = (e) => {
       e.preventDefault();
+      if (game.state === 'RESULT') {
+        game.reset();
+        return;
+      }
       game.startPump();
       btnPump.classList.add('active');
     };
@@ -74,6 +78,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnLaunchShoe) {
     const onLaunchShoe = (e) => {
       e.preventDefault();
+      if (game.state === 'RESULT') {
+        game.reset();
+        return;
+      }
       game.launch('shoe');
       btnLaunchShoe.classList.add('pressed');
       setTimeout(() => btnLaunchShoe.classList.remove('pressed'), 200);
@@ -87,6 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnLaunchHuman) {
     const onLaunchHuman = (e) => {
       e.preventDefault();
+      if (game.state === 'RESULT') {
+        game.reset();
+        return;
+      }
       game.launch('human');
       btnLaunchHuman.classList.add('pressed');
       setTimeout(() => btnLaunchHuman.classList.remove('pressed'), 200);
