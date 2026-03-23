@@ -72,11 +72,19 @@ class GameUI {
 
     // コインHUDのアニメーション開始
     this.coinAnimTimer = 2.5; // 2.5秒かけて増やす
+
+    // ショップボタンを表示
+    const btnOpenShop = document.getElementById('btnOpenShop');
+    if (btnOpenShop) btnOpenShop.classList.remove('hidden');
   }
 
   /** 結果を非表示にする */
   hideResult() {
     this.showResult = false;
+
+    // ショップボタンを非表示
+    const btnOpenShop = document.getElementById('btnOpenShop');
+    if (btnOpenShop) btnOpenShop.classList.add('hidden');
   }
 
   /**
@@ -96,8 +104,12 @@ class GameUI {
     if (this.coinAnimTimer > 0) {
       this.coinAnimTimer -= dt;
       // displayCoins を目標値に向けて増やす
-      const speed = this.earnedCoins / 2.5; // 2.5秒で全部増える
-      this.displayCoins = Math.min(targetCoins, this.displayCoins + speed * dt);
+      const speed = this.earnedCoins / 2.5; // 2.5秒で全部増える（減る）
+      if (this.earnedCoins >= 0) {
+        this.displayCoins = Math.min(targetCoins, this.displayCoins + speed * dt);
+      } else {
+        this.displayCoins = Math.max(targetCoins, this.displayCoins + speed * dt);
+      }
     } else {
       this.displayCoins = targetCoins;
     }
@@ -296,7 +308,8 @@ class GameUI {
 
     ctx.fillStyle = 'white';
     ctx.font = 'bold 30px "Nunito", sans-serif';
-    ctx.fillText(`+${this.earnedCoins}`, W / 2, cardY + 230);
+    const signText = this.earnedCoins > 0 ? '+' : '';
+    ctx.fillText(`${signText}${this.earnedCoins}`, W / 2, cardY + 230);
 
     if (this.bonusApplied) {
       ctx.fillStyle = '#FF6D00';

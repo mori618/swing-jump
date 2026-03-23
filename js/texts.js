@@ -34,10 +34,10 @@ const TEXTS = {
   RESULT_TITLE_SHOE: 'くつ着地！',
 
   // 結果画面：人間飛びメッセージ
-  RANK_H_BACKWARD: '逆噴射！？背中から落ちた！',
+  RANK_H_BACKWARD: '逆噴射！？',
   RANK_H_LEGEND: '伝説の鳥人！星になった...！',
   RANK_H_MASTER: '大空の覇者！素晴らしいジャンプ！',
-  RANK_H_GOOD: 'ナイス着地！体操選手並みの安定感！',
+  RANK_H_GOOD: 'ナイスジャンプ！',
   RANK_H_POOR: 'もっとスイングを極めて高く飛ぼう！',
 
   // 結果画面：靴とばしメッセージ

@@ -26,6 +26,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // ゲームインスタンスを生成する
   let game = new Game(canvas);
 
+  // ショップUI初期化
+  let shop = new ShopUI(game.save);
+
+  // ショップ開くボタン
+  const btnOpenShop = document.getElementById('btnOpenShop');
+  if (btnOpenShop) {
+    btnOpenShop.addEventListener('click', () => {
+      // ショップを閉じた時にリザルトやHUDを最新のコイン等で更新するために game.ui.draw が呼ばれるが、ここでは特にコールバック処理は不要と想定
+      shop.open(() => {
+        // 閉じた後の処理が必要であればここに書く
+      });
+    });
+  }
+
   // ===== ウィンドウリサイズ対応 =====
   window.addEventListener('resize', () => {
     game._resize();

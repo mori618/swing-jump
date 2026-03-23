@@ -140,6 +140,10 @@ class Game {
 
   // ===== 飛ばすボタンのアクション =====
   launch(type) {
+    if (this.state === STATE.FLYING && type === 'human') {
+      this.doubleJump();
+      return;
+    }
     if (this.state === STATE.RESULT || this.launchType === 'human') return;
     if (type === 'shoe' && this.projectiles.some(p => p.type === 'shoe')) return;
 
@@ -153,7 +157,8 @@ class Game {
       vel.vx,
       vel.vy,
       this.pendulum.angle,
-      this.pendulum.angularVelocity
+      this.pendulum.angularVelocity,
+      this.save.equippedItems
     );
 
     this.projectiles.push(p);
@@ -169,6 +174,24 @@ class Game {
       // type === 'shoe' だけならブランコはまだ漕げる
       this.state = STATE.FLYING; // ただしゲーム進行は投射物追尾へ
     }
+  }
+
+  // ===== 空中での２段ジャンプ処理 =====
+  doubleJump() {
+    if (!this.save.equippedItems.includes('double_jump')) return;
+    
+    // 対象となる human を探す
+    const human = this.projectiles.find(p => p.type === 'human');
+    if (!human || human.landed || human.hasDoubleJumped) return;
+
+    human.hasDoubleJumped = true;
+    
+    // ジャンプ力の計算
+    let jumpPower = -9;
+    if (this.save.equippedItems.includes('jump_up')) {
+      jumpPower = -14;
+    }
+    human.vy = jumpPower;
   }
 
   // ===== メインゲームループ =====

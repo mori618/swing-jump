@@ -22,6 +22,9 @@
     <!-- メインキャンバス -->
     <canvas id="gameCanvas"></canvas>
 
+    <!-- ショップ開くボタン（結果画面用） -->
+    <button id="btnOpenShop" class="shop-open-btn hidden">🛒 ショップ</button>
+
     <!-- 操作ボタンエリア（Fixed: 画面下部） -->
     <div id="buttonArea">
       <div id="buttonContainer">
@@ -41,9 +44,27 @@
       </div>
     </div>  </div>
 
+  <!-- ショップ画面モーダル -->
+  <div id="shopModal" class="hidden">
+    <div class="shop-content">
+      <div class="shop-header">
+        <h2>ショップ</h2>
+        <div class="shop-coins">🪙 <span id="shopCoinCount">0</span></div>
+        <button id="btnCloseShop" class="close-btn">×</button>
+      </div>
+      <div class="shop-equip-slots">
+        装備中: <span id="equipCount">0</span>/3
+      </div>
+      <div id="shopItemList" class="shop-item-list">
+        <!-- アイテムが動的に追加される -->
+      </div>
+    </div>
+  </div>
+
   <!-- JSファイル読み込み（依存順） -->
   <script src="js/texts.js"></script>
   <script src="js/save.js"></script>
+  <script src="js/shop.js"></script>
   <script src="js/physics.js"></script>
   <script src="js/character.js"></script>
   <script src="js/ui.js"></script>

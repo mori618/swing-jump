@@ -174,8 +174,9 @@ class Projectile {
    * @param {number} vy 初速Y成分
    * @param {number} initialAngle 飛び出し時の振り子角度
    * @param {number} angularVelocity 飛び出し時の角速度（回転スピード用）
+   * @param {Array<string>} equippedItems 装備中のアイテムIDリスト
    */
-  constructor(type, x, y, vx, vy, initialAngle, angularVelocity) {
+  constructor(type, x, y, vx, vy, initialAngle, angularVelocity, equippedItems = []) {
     this.type = type;
     this.x = x;
     this.y = y;
@@ -193,34 +194,104 @@ class Projectile {
     // 空中回転
     this.rotation = type === 'shoe' ? 0 : -initialAngle;
     this.vrot = angularVelocity * (type === 'shoe' ? 2 : 1.2);
+
+    // ショップアイテム関連の初期化
+    this.equippedItems = equippedItems;
+    this.maxAltitude = -y; // -y は高度(画面上がy=0のため)
+    this.hasDoubleJumped = false;
+    this.sliding = false;
+    this.needResultTrigger = false;
+
+    // 「ジャンプ力アップ」アイテム
+    if (type === 'human' && this.equippedItems.includes('jump_up')) {
+      this.vy -= 15; // 飛び出し時の初速を上方向に強化
+    }
   }
 
   /**
    * 放物線運動を1フレーム進める
    */
   update() {
-    if (this.landed) return;
-    
+    if (this.landed && !this.sliding) return;
+
+    if (this.sliding) {
+      // 「こおり」「アイスシューズ」の滑り処理
+      const friction = this.equippedItems.includes('ice_shoes') ? 0.995 : 0.98;
+      this.vx *= friction;
+      this.x += this.vx;
+
+      if (Math.abs(this.vx) < 0.1) {
+        this.vx = 0;
+        this.sliding = false;
+      }
+      return;
+    }
+
     this.vx *= this.friction;
     this.vy += this.gravity;
     this.x += this.vx;
     this.y += this.vy;
     this.rotation += this.vrot;
+
+    // 最高高度の記録（「スーパーボール」用）
+    if (this.type === 'human') {
+      const currentAlt = -this.y;
+      if (currentAlt > this.maxAltitude) {
+        this.maxAltitude = currentAlt;
+      }
+    }
   }
 
-  /**
-   * 着地判定を行い、着地していれば物理状態を更新する
-   * @param {number} groundY 地面のY座標
-   * @param {number} pivotX 支点X座標（距離計算用）
-   * @returns {boolean} 着地したかどうか（今回初めて着地した場合true）
-   */
   checkLanding(groundY, pivotX) {
     if (!this.landed && this.y > groundY) {
       this.y = groundY;
+      
+      // 「スーパーボール」バウンド処理
+      if (this.type === 'human' && this.equippedItems.includes('super_ball')) {
+        const dropHeight = this.maxAltitude + groundY; 
+        let bounceVy = -Math.sqrt(Math.max(0, dropHeight)) * 0.7; // 落下距離から適当なバウンド力を算出
+        
+        if (this.equippedItems.includes('jump_up')) {
+          bounceVy *= 1.35; // ジャンプ力アップでも跳ねる
+        }
+
+        // 一定以上のバウンド力があれば跳ね続ける
+        if (bounceVy < -2.0) {
+          this.vy = bounceVy;
+          this.vx *= 0.85; // 地面抵抗での減速
+          this.y = groundY - 1; // 地面に埋まらないように上げる
+          this.maxAltitude = -this.y; // 新しい頂点計測用
+          // 回転も再生成
+          this.vrot += (Math.random() - 0.5) * 0.2;
+          return false;
+        }
+      }
+
       this.landed = true;
+
+      // 「こおり」着地後の滑り処理
+      if (this.type === 'human' && this.equippedItems.includes('ice') && Math.abs(this.vx) > 1.0) {
+        // 「アイスシューズ」ペナルティ：落下速度が速すぎると着地失敗
+        if (this.equippedItems.includes('ice_shoes') && this.vy > 14) {
+          this.vx *= 0.3; // ズザザッと大きく減速
+        }
+        
+        this.sliding = true;
+        this.needResultTrigger = true;
+        return false; // まだゲームは終わらない
+      }
+
       this.dist = (this.x - pivotX) * PHYSICS_CONFIG.meterScale;
-      return true;
+      return true; // RESULTへ移行
     }
+
+    // 滑った後に止まった場合
+    if (this.landed && !this.sliding && this.needResultTrigger) {
+      this.needResultTrigger = false;
+      this.dist = (this.x - pivotX) * PHYSICS_CONFIG.meterScale;
+      return true; // ここでRESULTへ移行
+    }
+
     return false;
   }
 }
