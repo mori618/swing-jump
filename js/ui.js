@@ -156,7 +156,7 @@ class GameUI {
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur = 4;
-    ctx.fillText('POWER', W / 2, gaugeY + 13);
+    ctx.fillText(TEXTS.UI_POWER, W / 2, gaugeY + 13);
     ctx.restore();
   }
 
@@ -175,10 +175,10 @@ class GameUI {
     ctx.fillStyle = '#FFD700';
     ctx.font = 'bold 11px "Nunito", sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('🏆 BEST', 22, 58);
+    ctx.fillText(TEXTS.UI_BEST, 22, 58);
     ctx.fillStyle = 'white';
     ctx.font = 'bold 17px "Nunito", sans-serif';
-    ctx.fillText(`${this.save.bestDistance.toFixed(1)} m`, 22, 76);
+    ctx.fillText(`${this.save.bestDistance.toFixed(1)} ${TEXTS.UI_M}`, 22, 76);
 
     // --- 右: コイン ---
     ctx.fillStyle = 'rgba(0,0,0,0.45)';
@@ -189,7 +189,7 @@ class GameUI {
     ctx.fillStyle = '#FFD700';
     ctx.font = 'bold 11px "Nunito", sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('🪙 COINS', W - 22, 58);
+    ctx.fillText(TEXTS.UI_COINS, W - 22, 58);
     ctx.fillStyle = 'white';
     ctx.font = 'bold 17px "Nunito", sans-serif';
     ctx.fillText(Math.floor(this.displayCoins).toLocaleString(), W - 22, 76);
@@ -207,10 +207,10 @@ class GameUI {
     ctx.fillStyle = '#00E5FF';
     ctx.font = 'bold 11px "Nunito", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('飛行距離', W / 2, H - 58);
+    ctx.fillText(TEXTS.UI_FLIGHT_DIST, W / 2, H - 58);
     ctx.fillStyle = 'white';
     ctx.font = 'bold 22px "Nunito", sans-serif';
-    ctx.fillText(`${this.currentDistance.toFixed(1)} m`, W / 2, H - 40);
+    ctx.fillText(`${this.currentDistance.toFixed(1)} ${TEXTS.UI_M}`, W / 2, H - 40);
     ctx.restore();
   }
 
@@ -241,21 +241,21 @@ class GameUI {
     // ランクメッセージの決定
     const dist = this.resultDistance;
     let rankMsg;
-    let titleTxt = '🎉 着地成功！';
+    let titleTxt = TEXTS.RESULT_TITLE_HUMAN;
 
     if (this.showResultType === 'human') {
-      if (dist < 0)        rankMsg = '逆噴射！？背中から落ちた！';
-      else if (dist > 300) rankMsg = '伝説の鳥人！星になった...！';
-      else if (dist > 150) rankMsg = '大空の覇者！素晴らしいジャンプ！';
-      else if (dist > 60)  rankMsg = 'ナイス着地！体操選手並みの安定感！';
-      else                 rankMsg = 'もっとスイングを極めて高く飛ぼう！';
+      if (dist < 0)        rankMsg = TEXTS.RANK_H_BACKWARD;
+      else if (dist > 300) rankMsg = TEXTS.RANK_H_LEGEND;
+      else if (dist > 150) rankMsg = TEXTS.RANK_H_MASTER;
+      else if (dist > 60)  rankMsg = TEXTS.RANK_H_GOOD;
+      else                 rankMsg = TEXTS.RANK_H_POOR;
     } else {
-      titleTxt = '👟 くつ着地！';
-      if (dist < 0)        rankMsg = 'あれっ、逆向きだ！';
-      else if (dist > 300) rankMsg = '空の果てまで到達！大気圏突破！🚀';
-      else if (dist > 150) rankMsg = '超人的な跳躍だ！';
-      else if (dist > 60)  rankMsg = 'お見事！いいキックだ！';
-      else                 rankMsg = 'もっと加速してから飛ぼう！';
+      titleTxt = TEXTS.RESULT_TITLE_SHOE;
+      if (dist < 0)        rankMsg = TEXTS.RANK_S_BACKWARD;
+      else if (dist > 300) rankMsg = TEXTS.RANK_S_LEGEND;
+      else if (dist > 150) rankMsg = TEXTS.RANK_S_MASTER;
+      else if (dist > 60)  rankMsg = TEXTS.RANK_S_GOOD;
+      else                 rankMsg = TEXTS.RANK_S_POOR;
     }
 
     // タイトル
@@ -272,11 +272,11 @@ class GameUI {
     ctx.fillText(`${dist.toFixed(1)}`, W / 2, cardY + 108);
     ctx.font = 'bold 18px "Nunito", sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    ctx.fillText('メートル', W / 2, cardY + 130);
+    ctx.fillText(TEXTS.UI_METER, W / 2, cardY + 130);
 
     ctx.fillStyle = this.isNewRecord ? '#FF6D00' : 'rgba(255,255,255,0.75)';
     ctx.font = this.isNewRecord ? 'bold 16px "Nunito", sans-serif' : '14px "Nunito", sans-serif';
-    ctx.fillText(this.isNewRecord ? `🌟 新記録！ ${rankMsg}` : rankMsg, W / 2, cardY + 158);
+    ctx.fillText(this.isNewRecord ? TEXTS.RESULT_NEW_RECORD + rankMsg : rankMsg, W / 2, cardY + 158);
 
     // コイン獲得表示（仕切り線）
     ctx.strokeStyle = 'rgba(255,255,255,0.2)';
@@ -292,7 +292,7 @@ class GameUI {
 
     ctx.fillStyle = '#FFD700';
     ctx.font = 'bold 14px "Nunito", sans-serif';
-    ctx.fillText('🪙 獲得コイン', W / 2, cardY + 195);
+    ctx.fillText(TEXTS.RESULT_EARNED_COINS, W / 2, cardY + 195);
 
     ctx.fillStyle = 'white';
     ctx.font = 'bold 30px "Nunito", sans-serif';
@@ -301,18 +301,18 @@ class GameUI {
     if (this.bonusApplied) {
       ctx.fillStyle = '#FF6D00';
       ctx.font = '12px "Nunito", sans-serif';
-      ctx.fillText(`(基礎 +${baseCoins}  新記録ボーナス +${bonusCoins})`, W / 2, cardY + 248);
+      ctx.fillText(TEXTS.RESULT_BONUS_TEXT(baseCoins, bonusCoins), W / 2, cardY + 248);
     }
 
     // 合計コイン
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.font = '12px "Nunito", sans-serif';
-    ctx.fillText(`合計: ${this.save.coins.toLocaleString()} コイン`, W / 2, cardY + 265);
+    ctx.fillText(TEXTS.RESULT_TOTAL_COINS(this.save.coins.toLocaleString()), W / 2, cardY + 265);
 
     // リトライ
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.font = '13px "Nunito", sans-serif';
-    ctx.fillText('タップしてもう一度', W / 2, cardY + 283);
+    ctx.fillText(TEXTS.RESULT_RETRY, W / 2, cardY + 283);
 
     ctx.restore();
   }
@@ -331,8 +331,8 @@ class GameUI {
     ctx.fillStyle = 'white';
     ctx.font = '13px "Nunito", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('👇 リズムよくこいで、', W / 2, H / 2 + 82);
-    ctx.fillText('タイミングよく「とぶ！」', W / 2, H / 2 + 100);
+    ctx.fillText(TEXTS.GUIDE_LINE1, W / 2, H / 2 + 82);
+    ctx.fillText(TEXTS.GUIDE_LINE2, W / 2, H / 2 + 100);
     ctx.restore();
   }
 

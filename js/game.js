@@ -296,7 +296,7 @@ class Game {
         ctx.fillRect(mx, this.groundY, 3, 30);
         if (m % 100 === 0) {
             ctx.font = "bold 32px sans-serif";
-            ctx.fillText(`${m}m`, mx + 8, this.groundY + 45);
+            ctx.fillText(`${m}${TEXTS.UI_M}`, mx + 8, this.groundY + 45);
             ctx.font = "bold 24px sans-serif";
         }
     }
@@ -436,8 +436,8 @@ class Game {
     // ラベル
     ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.font = 'bold 12px "Nunito", sans-serif';
-    ctx.fillText('PUSH', 0, -r * 1.05);
-    ctx.fillText('RELEASE', 0, -r * 0.82);
+    ctx.fillText(TEXTS.GAME_PUSH, 0, -r * 1.05);
+    ctx.fillText(TEXTS.GAME_RELEASE, 0, -r * 0.82);
 
     ctx.restore();
   }
@@ -450,7 +450,7 @@ class Game {
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur = 6;
-    ctx.fillText(`📍 ${p.dist.toFixed(1)}m`, p.x, this.groundY - 16);
+    ctx.fillText(`${TEXTS.GAME_MARKER}${p.dist.toFixed(1)}${TEXTS.UI_M}`, p.x, this.groundY - 16);
     ctx.restore();
   }
 

@@ -6,6 +6,19 @@
 'use strict';
 
 document.addEventListener('DOMContentLoaded', () => {
+  // ===== HTMLテキスト初期化 =====
+  document.title = TEXTS.HTML_TITLE;
+  const loadingH1 = document.querySelector('#loading h1');
+  if (loadingH1) loadingH1.textContent = TEXTS.HTML_LOADING_TITLE;
+  const loadingP = document.querySelector('#loading p');
+  if (loadingP) loadingP.textContent = TEXTS.HTML_LOADING_TEXT;
+  const pumpLabel = document.querySelector('#btnPump .btn-label');
+  if (pumpLabel) pumpLabel.textContent = TEXTS.HTML_BTN_PUMP;
+  const launchLabel = document.querySelector('#btnLaunchHuman .btn-label');
+  if (launchLabel) launchLabel.textContent = TEXTS.HTML_BTN_LAUNCH;
+  const warningText = document.querySelector('.warning-text');
+  if (warningText) warningText.textContent = TEXTS.HTML_WARNING;
+
   const canvas = document.getElementById('gameCanvas');
   const btnLeg = document.getElementById('btnLeg');
   const btnLaunch = document.getElementById('btnLaunch');
