@@ -37,7 +37,7 @@ class Game {
     this._resize();
 
     // --- 各モジュールの初期化 ---
-    this.pendulum = new Pendulum(180, this.GRAVITY);
+    this.pendulum = new Pendulum(180);
     this.character = new Character(this.ctx);
     this.save = new SaveManager();
     this.ui = new GameUI(this.save);
@@ -45,7 +45,10 @@ class Game {
 
     // --- ゲームステート ---
     this.state = STATE.SWINGING;
-    this.projectile = null;
+    this.projectiles = [];
+    this.launchType = '';
+    this.displayRotations = 0;
+    this.lastVelSign = 0;
 
     // --- カメラ ---
     this.cam = {
@@ -58,7 +61,7 @@ class Game {
     };
 
     // --- 入力状態 ---
-    this.isLegExtended = false;
+    this.isPushing = false;
 
     // --- アニメーションフレーム管理 ---
     this.lastTime = null;
@@ -116,12 +119,12 @@ class Game {
   // ===== ゲームリセット =====
   reset() {
     const ropeLen = Math.min(this.canvas.width, this.canvas.height) * 0.28;
-    this.pendulum = new Pendulum(ropeLen, this.GRAVITY);
-    this.pendulum.angle = Math.PI * 0.5;
-    this.pendulum.angularVelocity = 0;
+    this.pendulum = new Pendulum(ropeLen);
     this.state = STATE.SWINGING;
-    this.projectile = null;
-    this.isLegExtended = false;
+    this.projectiles = [];
+    this.launchType = '';
+    this.displayRotations = 0;
+    this.isPushing = false;
     this.character.legExtended = false;
     this.character.flyPose = false;
     this.cam.x = 0;
@@ -135,47 +138,59 @@ class Game {
     this.ui.resetGuide();
   }
 
-  // ===== 脚を伸ばすボタンのアクション =====
-  startLegExtend() {
-    if (this.state === STATE.SWINGING) {
-      this.isLegExtended = true;
-      this.pendulum.legExtended = true;
-      this.character.legExtended = true;
+  // ===== こぐボタンのアクション =====
+  startPump() {
+    if (this.state === STATE.RESULT || this.launchType === 'human') return;
+    this.isPushing = true;
+    this.ui.guideTimer = 0;
+    
+    if (this.pendulum.angularVelocity > 0 && this.pendulum.canPushBoost) {
+      this.pendulum.angularVelocity += PHYSICS_CONFIG.pushImpulse;
+      this.pendulum.canPushBoost = false;
     }
   }
 
-  stopLegExtend() {
-    this.isLegExtended = false;
-    this.pendulum.legExtended = false;
-    this.character.legExtended = false;
+  stopPump() {
+    if (this.state === STATE.RESULT || !this.isPushing) return;
+    this.isPushing = false;
+    
+    if (this.pendulum.angularVelocity < 0 && this.pendulum.canReleaseBoost) {
+      this.pendulum.angularVelocity -= PHYSICS_CONFIG.releaseImpulse;
+      this.pendulum.canReleaseBoost = false;
+    }
   }
 
-  // ===== 飛んでいくボタンのアクション =====
-  launch() {
-    if (this.state !== STATE.SWINGING) return;
+  // ===== 飛ばすボタンのアクション =====
+  launch(type) {
+    if (this.state === STATE.RESULT || this.launchType === 'human') return;
+    if (type === 'shoe' && this.projectiles.some(p => p.type === 'shoe')) return;
 
     const seat = this.pendulum.getSeatPosition(this.pivotX, this.pivotY);
-    // 参考コードに倣った初速計算（上方向ブースト込み）
-    const vel = this.pendulum.getVelocity(this.BOOST_FACTOR);
+    const vel = this.pendulum.getVelocity();
 
-    // 飛行オブジェクト生成
-    this.projectile = new Projectile(
+    const p = new Projectile(
+      type,
       seat.x,
-      seat.y - 30,  // キャラクターの重心（座席より少し上）
+      seat.y - 30,  // キャラクターの重心
       vel.vx,
       vel.vy,
-      this.FLY_GRAVITY,
-      this.pendulum.angle
+      this.pendulum.angle,
+      this.pendulum.angularVelocity
     );
 
-    // 回転角速度を設定（角速度に比例）
-    this.projectile.vrot = this.pendulum.angularVelocity * 1.2;
+    this.projectiles.push(p);
+    this.launchType = type;
+    this.cam.followSpeed = 0.25;
 
-    this.state = STATE.FLYING;
-    this.character.flyPose = true;
-    this.isLegExtended = false;
-    this.pendulum.legExtended = false;
-    this.cam.followSpeed = 0.25; // 飛行中はカメラを素早く追従
+    // type === 'human' の場合は飛行状態へ完全移行
+    if (type === 'human') {
+      this.state = STATE.FLYING;
+      this.character.flyPose = true;
+      this.isPushing = false;
+    } else if (type === 'shoe') {
+      // type === 'shoe' だけならブランコはまだ漕げる
+      this.state = STATE.FLYING; // ただしゲーム進行は投射物追尾へ
+    }
   }
 
   // ===== メインゲームループ =====
@@ -193,48 +208,69 @@ class Game {
 
   // ===== 状態更新 =====
   _update(dt) {
-    if (this.state === STATE.SWINGING) {
-      this.pendulum.update(dt);
-      const maxSpeed = 12;
-      this.ui.setPower(Math.abs(this.pendulum.angularVelocity) / maxSpeed);
+    // 振り子の更新（humanが飛んでいない場合のみ）
+    if (this.launchType !== 'human') {
+      const oldRotPhase = Math.floor((this.pendulum.angle + Math.PI) / (Math.PI * 2));
+      
+      this.pendulum.update();
+      
+      const newRotPhase = Math.floor((this.pendulum.angle + Math.PI) / (Math.PI * 2));
 
-    } else if (this.state === STATE.FLYING) {
-      this.projectile.update(dt);
-
-      // カメラターゲット：飛行中のキャラクター
-      const p = this.projectile;
-      const screenCenterX = this.canvas.width / 2;
-      const screenCenterY = this.canvas.height / 2;
-
-      // XY両方向追従（参考コード準拠）
-      this.cam.targetX = Math.max(0, p.x - screenCenterX * 0.4);
-      this.cam.targetY = Math.max(0, p.y - screenCenterY * 0.6);
-
-      // 飛行距離に応じてズームアウト
-      const xDiff = Math.abs(p.x - this.pivotX);
-      this.cam.zoom = Math.max(0.3, 1 - xDiff * 0.00015);
-
-      this.cam.x += (this.cam.targetX - this.cam.x) * this.cam.followSpeed;
-      this.cam.y += (this.cam.targetY - this.cam.y) * this.cam.followSpeed;
-
-      const dist = this.projectile.getDistance(this.PIXELS_PER_METER);
-      this.ui.setDistance(dist);
-      this.ui.setPower(0);
-
-      // 着地判定
-      if (this.projectile.hasLanded(this.groundY)) {
-        this.projectile.y = this.groundY;
-        this.projectile.vrot = 0; // 着地後は回転停止
-        this.state = STATE.RESULT;
-        this.ui.showResultScreen(dist);
+      if (oldRotPhase !== newRotPhase) {
+        this.displayRotations++;
+        this.pendulum.canPushBoost = true;
+        this.pendulum.canReleaseBoost = true;
       }
 
-    } else if (this.state === STATE.RESULT) {
-      // 着地後もカメラを徐々に穏やかに更新
-      this.cam.followSpeed = 0.04;
-      this.cam.x += (this.cam.targetX - this.cam.x) * this.cam.followSpeed;
-      this.cam.y += (this.cam.targetY - this.cam.y) * this.cam.followSpeed;
+      const currentVelSign = Math.sign(this.pendulum.angularVelocity);
+      if (currentVelSign !== this.lastVelSign && currentVelSign !== 0) {
+        this.pendulum.canPushBoost = true;
+        this.pendulum.canReleaseBoost = true;
+        this.lastVelSign = currentVelSign;
+      }
+
+      const maxSpeed = 0.4;
+      this.ui.setPower(Math.abs(this.pendulum.angularVelocity) / maxSpeed);
+    } else {
+      this.ui.setPower(0);
     }
+
+    if (this.state === STATE.FLYING || this.state === STATE.RESULT) {
+      let primaryTarget = null;
+      this.projectiles.forEach(p => {
+        if (!p.landed) {
+          p.update();
+          if (p.checkLanding(this.groundY, this.pivotX)) {
+            if (p.type === 'human' || this.launchType === 'shoe') {
+              this.state = STATE.RESULT;
+              this.ui.showResultScreen(p.dist, p.type);
+            }
+          }
+        }
+        if (p.type === 'human') primaryTarget = p;
+        else if (!primaryTarget) primaryTarget = p; // shoe falls back
+      });
+
+      if (primaryTarget) {
+        const screenCenterX = this.canvas.width / 2;
+        const screenCenterY = this.canvas.height / 2;
+
+        this.cam.targetX = Math.max(0, primaryTarget.x - screenCenterX * 0.4);
+        this.cam.targetY = Math.max(0, primaryTarget.y - screenCenterY * 0.6);
+
+        const xDiff = Math.abs(primaryTarget.x - this.pivotX);
+        this.cam.zoom = Math.max(0.25, 1 - xDiff * 0.00012);
+
+        this.ui.setDistance((primaryTarget.x - this.pivotX) * PHYSICS_CONFIG.meterScale);
+      }
+    }
+
+    // カメラの追従
+    if (this.state === STATE.RESULT) {
+      this.cam.followSpeed = 0.04;
+    }
+    this.cam.x += (this.cam.targetX - this.cam.x) * this.cam.followSpeed;
+    this.cam.y += (this.cam.targetY - this.cam.y) * this.cam.followSpeed;
   }
 
   // ===== 描画 =====
@@ -297,10 +333,9 @@ class Game {
     this._drawSwingFrame(ctx);
 
     // ===== ロープ =====
-    if (this.state === STATE.SWINGING) {
+    if (this.launchType !== 'human') {
       const seat = this.pendulum.getSeatPosition(this.pivotX, this.pivotY);
 
-      // 支点から座席へロープ
       ctx.strokeStyle = '#64748b';
       ctx.lineWidth = 4;
       ctx.beginPath();
@@ -308,43 +343,48 @@ class Game {
       ctx.lineTo(seat.x, seat.y);
       ctx.stroke();
 
-      // キャラクターを描画
-      this.character.legExtended = this.isLegExtended;
-      this.character.drawOnSwing(seat.x, seat.y, this.pendulum.angle, this.pivotX, this.pivotY);
+      this.character.legExtended = this.isPushing;
+      const hasShoe = !this.projectiles.some(p => p.type === 'shoe');
+      this.character.drawOnSwing(seat.x, seat.y, this.pendulum.angle, this.pivotX, this.pivotY, hasShoe);
     }
 
-    // 支点の丸キャップ（常時表示）
     ctx.fillStyle = '#334155';
     ctx.beginPath();
     ctx.arc(this.pivotX, this.pivotY, 10, 0, Math.PI * 2);
     ctx.fill();
 
-    // ===== 飛行中・着地後のキャラクター =====
-    if (this.state === STATE.FLYING) {
-      const p = this.projectile;
-      this.character.drawFlying(p.x, p.y, p.vx, p.vy, p.rotation);
-
-    } else if (this.state === STATE.RESULT) {
-      const p = this.projectile;
-      // 着地後はやられポーズ
-      this.character.drawLanded(p.x, p.y);
-
-      // 着地マーカー（距離ラベル）
-      const dist = p.getDistance(this.PIXELS_PER_METER);
-      ctx.save();
-      ctx.fillStyle = '#FF6D00';
-      ctx.font = 'bold 18px "Nunito", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.shadowColor = 'rgba(0,0,0,0.5)';
-      ctx.shadowBlur = 6;
-      ctx.fillText(`📍 ${dist.toFixed(1)}m`, p.x, this.groundY - 16);
-      ctx.restore();
-    }
+    // ===== 飛行中・着地後のキャラクターと靴 =====
+    this.projectiles.forEach(p => {
+      if (p.type === 'human') {
+        if (!p.landed) {
+          this.character.drawFlying(p.x, p.y, p.vx, p.vy, p.rotation, false);
+        } else {
+          this.character.drawLanded(p.x, p.y);
+          this._drawMarker(ctx, p);
+        }
+      } else if (p.type === 'shoe') {
+        this.character.drawShoe(p.x, p.y, p.rotation, 1.3);
+        if (p.landed && this.launchType === 'shoe') {
+          this._drawMarker(ctx, p);
+        }
+      }
+    });
 
     ctx.restore(); // カメラ変換終了
 
-    // ===== UI（カメラの影響を受けない） =====
     this.ui.draw(ctx, W, H, this.state, this._lastDt);
+  }
+  
+  _drawMarker(ctx, p) {
+    if (p.dist === 0) return;
+    ctx.save();
+    ctx.fillStyle = '#FF6D00';
+    ctx.font = 'bold 18px "Nunito", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 6;
+    ctx.fillText(`📍 ${p.dist.toFixed(1)}m`, p.x, this.groundY - 16);
+    ctx.restore();
   }
 
   // ===== ブランコ支柱の描画（A字型） =====

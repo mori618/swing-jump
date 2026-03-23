@@ -25,8 +25,9 @@ class Character {
    * @param {number} angle  振り子の角度（ラジアン）
    * @param {number} pivotX 支点X
    * @param {number} pivotY 支点Y
+   * @param {boolean} hasShoe 靴を履いているか
    */
-  drawOnSwing(seatX, seatY, angle, pivotX, pivotY) {
+  drawOnSwing(seatX, seatY, angle, pivotX, pivotY, hasShoe = true) {
     const ctx = this.ctx;
     ctx.save();
 
@@ -112,13 +113,19 @@ class Character {
     ctx.stroke();
 
     // 足（靴）
-    ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.ellipse(-6 + footDx + 2, -12 + footDy + 2, 7, 4, shoeAngle, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(6 + footDx + 2, -12 + footDy + 2, 7, 4, shoeAngle, 0, Math.PI * 2);
-    ctx.fill();
+    if (hasShoe) {
+      ctx.save();
+      ctx.translate(-6 + footDx + 2, -12 + footDy + 2);
+      ctx.rotate(shoeAngle);
+      this.drawShoe(0, 0, 0, 0.7);
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(6 + footDx + 2, -12 + footDy + 2);
+      ctx.rotate(shoeAngle);
+      this.drawShoe(0, 0, 0, 0.7);
+      ctx.restore();
+    }
 
     ctx.restore();
     ctx.restore();
@@ -131,8 +138,9 @@ class Character {
    * @param {number} vx       X速度（未使用）
    * @param {number} vy       Y速度（未使用）
    * @param {number} rotation 累積回転角（ラジアン）
+   * @param {boolean} hasShoe 靴を履いているか
    */
-  drawFlying(x, y, vx, vy, rotation = null) {
+  drawFlying(x, y, vx, vy, rotation = null, hasShoe = true) {
     const ctx = this.ctx;
     ctx.save();
     ctx.translate(x, y);
@@ -201,14 +209,41 @@ class Character {
     ctx.stroke();
 
     // 足（靴）
-    ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.ellipse(-6 + footDx + 2, -12 + footDy + 2, 7, 4, shoeAngle, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(6 + footDx + 2, -12 + footDy + 2, 7, 4, shoeAngle, 0, Math.PI * 2);
-    ctx.fill();
+    if (hasShoe) {
+      ctx.save();
+      ctx.translate(-6 + footDx + 2, -12 + footDy + 2);
+      ctx.rotate(shoeAngle);
+      this.drawShoe(0, 0, 0, 0.7);
+      ctx.restore();
 
+      ctx.save();
+      ctx.translate(6 + footDx + 2, -12 + footDy + 2);
+      ctx.rotate(shoeAngle);
+      this.drawShoe(0, 0, 0, 0.7);
+      ctx.restore();
+    }
+
+    ctx.restore();
+  }
+
+  /**
+   * 単独の靴を描画する
+   */
+  drawShoe(x, y, rotation, scale = 1.3) {
+    const ctx = this.ctx;
+    ctx.save();
+    if (x !== 0 || y !== 0) {
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+    }
+    ctx.scale(scale, scale);
+    ctx.fillStyle = "white";
+    ctx.strokeStyle = "#334155";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(-8, -4, 18, 10, 4);
+    ctx.fill();
+    ctx.stroke();
     ctx.restore();
   }
 

@@ -56,9 +56,11 @@ class GameUI {
   /**
    * 結果を表示する（SaveManagerに記録させてから表示）
    * @param {number} dist 飛行距離（メートル）
+   * @param {string} launchType 飛ばしたもの（'human' or 'shoe'）
    */
-  showResultScreen(dist) {
+  showResultScreen(dist, launchType) {
     this.resultDistance = dist;
+    this.showResultType = launchType;
     this.showResult = true;
     this.resultAlpha = 0;
 
@@ -236,30 +238,41 @@ class GameUI {
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
+    // ランクメッセージの決定
+    const dist = this.resultDistance;
+    let rankMsg;
+    let titleTxt = '🎉 着地成功！';
+
+    if (this.showResultType === 'human') {
+      if (dist < 0)        rankMsg = '逆噴射！？背中から落ちた！';
+      else if (dist > 300) rankMsg = '伝説の鳥人！星になった...！';
+      else if (dist > 150) rankMsg = '大空の覇者！素晴らしいジャンプ！';
+      else if (dist > 60)  rankMsg = 'ナイス着地！体操選手並みの安定感！';
+      else                 rankMsg = 'もっとスイングを極めて高く飛ぼう！';
+    } else {
+      titleTxt = '👟 くつ着地！';
+      if (dist < 0)        rankMsg = 'あれっ、逆向きだ！';
+      else if (dist > 300) rankMsg = '空の果てまで到達！大気圏突破！🚀';
+      else if (dist > 150) rankMsg = '超人的な跳躍だ！';
+      else if (dist > 60)  rankMsg = 'お見事！いいキックだ！';
+      else                 rankMsg = 'もっと加速してから飛ぼう！';
+    }
+
     // タイトル
     ctx.fillStyle = '#FFD700';
     ctx.font = 'bold 22px "Nunito", sans-serif';
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(0,0,0,0.6)';
     ctx.shadowBlur = 6;
-    ctx.fillText('🎉 着地成功！', W / 2, cardY + 42);
+    ctx.fillText(titleTxt, W / 2, cardY + 42);
 
     // 距離
     ctx.fillStyle = 'white';
     ctx.font = 'bold 54px "Nunito", sans-serif';
-    ctx.fillText(`${this.resultDistance.toFixed(1)}`, W / 2, cardY + 108);
+    ctx.fillText(`${dist.toFixed(1)}`, W / 2, cardY + 108);
     ctx.font = 'bold 18px "Nunito", sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.8)';
     ctx.fillText('メートル', W / 2, cardY + 130);
-
-    // ランクメッセージ
-    const dist = this.resultDistance;
-    let rankMsg;
-    if (dist < 0)        rankMsg = '逆噴射！？背中から落ちた！';
-    else if (dist > 300) rankMsg = '大気圏突破！空の果てへ！🚀';
-    else if (dist > 150) rankMsg = '大空の覇者！素晴らしいジャンプ！';
-    else if (dist > 60)  rankMsg = 'ナイス着地！体操選手並みの安定感！';
-    else                 rankMsg = 'もっとスイングを極めて高く飛ぼう！';
 
     ctx.fillStyle = this.isNewRecord ? '#FF6D00' : 'rgba(255,255,255,0.75)';
     ctx.font = this.isNewRecord ? 'bold 16px "Nunito", sans-serif' : '14px "Nunito", sans-serif';
@@ -318,8 +331,8 @@ class GameUI {
     ctx.fillStyle = 'white';
     ctx.font = '13px "Nunito", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('👇 脚を伸ばしてパワー', W / 2, H / 2 + 82);
-    ctx.fillText('を溜めよう！', W / 2, H / 2 + 100);
+    ctx.fillText('👇 リズムよくこいで、', W / 2, H / 2 + 82);
+    ctx.fillText('タイミングよく「とぶ！」', W / 2, H / 2 + 100);
     ctx.restore();
   }
 

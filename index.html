@@ -24,19 +24,29 @@
 
     <!-- 操作ボタンエリア（Fixed: 画面下部） -->
     <div id="buttonArea">
-      <!-- 脚を伸ばすボタン（押している間有効） -->
-      <button id="btnLeg" class="game-btn" type="button">
-        <span class="btn-icon">🦵</span>
-        <span class="btn-label">脚を伸ばす</span>
-      </button>
+      <div id="buttonContainer">
+        <!-- こぐボタン（押している間有効、タイミングよく） -->
+        <button id="btnPump" class="game-btn pump-btn" type="button">
+          <span class="btn-icon">⚡</span>
+          <span class="btn-label">こぐ！</span>
+        </button>
 
-      <!-- 飛んでいくボタン（タップで即時発動） -->
-      <button id="btnLaunch" class="game-btn" type="button">
-        <span class="btn-icon">🚀</span>
-        <span class="btn-label">飛んでいく！</span>
-      </button>
-    </div>
-  </div>
+        <div class="launch-buttons">
+          <!-- 飛んでいくボタン（靴） -->
+          <button id="btnLaunchShoe" class="game-btn launch-shoe-btn" type="button">
+            <span class="btn-icon">👟</span>
+            <span class="btn-label">とばす！</span>
+          </button>
+          <!-- 飛んでいくボタン（人間） -->
+          <button id="btnLaunchHuman" class="game-btn launch-human-btn" type="button">
+            <span class="btn-icon">🚀</span>
+            <span class="btn-label">とぶ！</span>
+          </button>
+        </div>
+        
+        <p class="warning-text">⚠ 非常に危険ですので、実際のブランコでは絶対に真似をしないでください。</p>
+      </div>
+    </div>  </div>
 
   <!-- JSファイル読み込み（依存順） -->
   <script src="js/save.js"></script>

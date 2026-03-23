@@ -47,81 +47,130 @@ html, body {
   left: 0;
   right: 0;
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
   align-items: center;
-  padding: 12px 24px 20px;
+  padding: 12px 16px 20px;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent);
   /* iOS セーフエリア対応 */
   padding-bottom: max(20px, env(safe-area-inset-bottom));
   pointer-events: none; /* コンテナ自体はクリック透過 */
 }
 
-/* ===== ボタン共通スタイル ===== */
+/* ===== ボタンコンテナ ===== */
+#buttonContainer {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ===== 打ち上げボタンコンテナ ===== */
+.launch-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* ===== ボタン共通スタイル上書き ===== */
 .game-btn {
   pointer-events: all; /* ボタン自体はクリック受付 */
-  width: 44%;
-  max-width: 180px;
-  height: 72px;
+  width: 100%;
+  max-width: none;
+  height: 64px;
   border: none;
-  border-radius: 20px;
+  border-radius: 16px;
   font-family: 'Nunito', sans-serif;
   font-weight: 900;
-  font-size: 17px;
+  font-size: 16px;
   letter-spacing: 0.02em;
   cursor: pointer;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 8px;
   transition:
     transform 0.08s ease,
+    background-color 0.1s ease,
     box-shadow 0.08s ease,
     filter 0.08s ease;
-  /* タッチ操作でモバイルでレスポンシブに見せるため */
   -webkit-appearance: none;
   outline: none;
   position: relative;
   overflow: hidden;
+}
+.launch-buttons .game-btn {
+  flex-direction: column;
+  gap: 2px;
+  height: 72px;
+  font-size: 14px;
+}
+.launch-buttons .game-btn .btn-icon {
+  font-size: 24px;
+}
+
+/* ===== 警告テキスト ===== */
+.warning-text {
+  font-size: 11px;
+  color: #ffbaba;
+  text-align: center;
+  margin: 0;
+  opacity: 0.85;
+  font-weight: 700;
 }
 
 /* 押したときの共通エフェクト */
 .game-btn:active,
 .game-btn.active,
 .game-btn.pressed {
-  transform: scale(0.93);
-  filter: brightness(0.88);
+  transform: scale(0.95);
+  filter: brightness(0.9);
 }
 
-/* ===== 脚を伸ばすボタン ===== */
-#btnLeg {
+/* Disabled */
+.game-btn:disabled,
+.game-btn.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  filter: grayscale(0.5);
+}
+
+/* ===== こぐボタン ===== */
+.pump-btn {
   background: linear-gradient(135deg, #00B4DB, #0083B0);
   color: white;
   box-shadow:
-    0 6px 20px rgba(0, 131, 176, 0.55),
+    0 4px 15px rgba(0, 131, 176, 0.45),
     0 2px 0px rgba(0, 50, 80, 0.8),
     inset 0 1px 0 rgba(255,255,255,0.2);
 }
 
-#btnLeg.active {
+.pump-btn.active {
   background: linear-gradient(135deg, #00D4FB, #00A3D0);
   box-shadow:
-    0 3px 10px rgba(0, 131, 176, 0.4),
+    0 2px 8px rgba(0, 131, 176, 0.3),
     0 1px 0px rgba(0, 50, 80, 0.8);
 }
 
-/* ===== 飛んでいくボタン ===== */
-#btnLaunch {
-  background: linear-gradient(135deg, #FF6D00, #FF4500);
+/* ===== とばすボタン（靴） ===== */
+.launch-shoe-btn {
+  background: linear-gradient(135deg, #FFA000, #FF6F00);
   color: white;
   box-shadow:
-    0 6px 20px rgba(255, 69, 0, 0.55),
-    0 2px 0px rgba(100, 20, 0, 0.8),
+    0 4px 15px rgba(255, 111, 0, 0.45),
+    0 2px 0px rgba(130, 40, 0, 0.8),
     inset 0 1px 0 rgba(255,255,255,0.2);
 }
 
-#btnLaunch.pressed {
-  background: linear-gradient(135deg, #FF8D30, #FF6520);
+/* ===== とぶボタン（人） ===== */
+.launch-human-btn {
+  background: linear-gradient(135deg, #FF5252, #D50000);
+  color: white;
+  box-shadow:
+    0 4px 15px rgba(213, 0, 0, 0.45),
+    0 2px 0px rgba(100, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255,255,255,0.2);
 }
 
 /* ===== ボタンのアイコン部分 ===== */
@@ -132,24 +181,14 @@ html, body {
 
 /* ===== ボタンのテキスト ===== */
 .btn-label {
-  font-size: 13px;
   font-weight: 700;
   line-height: 1;
   opacity: 0.95;
 }
 
-/* ===== 押しっぱなしインジケーター（脚ボタン） ===== */
-#btnLeg::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
-  opacity: 0;
-  transition: opacity 0.1s;
-  pointer-events: none;
-}
-#btnLeg.active::after {
-  opacity: 1;
+/* ===== 押しっぱなし・ブースト時のフィードバック ===== */
+.pump-btn.boost {
+  background: linear-gradient(135deg, #4DD0E1, #00BCD4);
 }
 
 /* ===== ローディング画面 ===== */

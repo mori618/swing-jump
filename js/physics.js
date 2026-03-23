@@ -6,64 +6,43 @@
 'use strict';
 
 /**
+ * 物理パラメータの設定（定数）
+ */
+const PHYSICS_CONFIG = {
+  gravity: 0.22,
+  friction: 0.9985,     
+  pushImpulse: 0.026,   
+  releaseImpulse: 0.014, 
+  shoeGravity: 0.15,
+  humanGravity: 0.18,
+  meterScale: 0.02
+};
+
+/**
  * 振り子（ブランコ）の物理状態を管理するクラス
  */
 class Pendulum {
   /**
    * @param {number} length  基本ロープ長（ピクセル）
-   * @param {number} gravity 重力加速度（px/s²）
    */
-  constructor(length, gravity) {
-    this.baseLength = length;   // 基本ロープ長
-    this.length = length;       // 現在の実効ロープ長（脚伸ばしで変化）
-    this.gravity = gravity;     // 重力加速度
+  constructor(length) {
+    this.length = length;       // アームの長さ（ピクセル）
+    this.angle = 0.4;           // 初期角度（ラジアン）
+    this.angularVelocity = 0;   // 角速度
 
-    this.angle = Math.PI * 0.5; // 初期角度（ラジアン）: 真横 90°
-    this.angularVelocity = 0;   // 角速度（rad/s）
-    this.damping = 0.999;       // 空気抵抗による減衰係数
-
-    // 脚伸ばし関連
-    this.legExtended = false;   // 脚を伸ばしているか
-    this.legLength = 30;        // 脚の長さ（描画用）
-    this.extendedLegLength = 55; // 伸ばした脚の長さ（描画用）
+    // ブースト（こぐ）関連
+    this.canPushBoost = true;
+    this.canReleaseBoost = true;
   }
 
   /**
-   * Runge-Kutta 4次法で物理を1ステップ進める
-   * @param {number} dt  タイムステップ（秒）
+   * 物理を1フレーム進める（参考コードはフレームベース駆動）
    */
-  update(dt) {
-    // 脚の伸ばしによるエネルギーポンピング（実効ロープ長の変化）
-    const targetLength = this.legExtended
-      ? this.baseLength + 40
-      : this.baseLength;
-
-    // 実効長を滑らかに変化させる
-    this.length += (targetLength - this.length) * 0.15;
-
-    // RK4 で角度・角速度を更新
-    const g = this.gravity;
-    const L = this.length;
-
-    const f = (angle, angVel) => -(g / L) * Math.sin(angle);
-
-    const k1_v = f(this.angle, this.angularVelocity);
-    const k1_a = this.angularVelocity;
-
-    const k2_v = f(this.angle + k1_a * dt / 2, this.angularVelocity + k1_v * dt / 2);
-    const k2_a = this.angularVelocity + k1_v * dt / 2;
-
-    const k3_v = f(this.angle + k2_a * dt / 2, this.angularVelocity + k2_v * dt / 2);
-    const k3_a = this.angularVelocity + k2_v * dt / 2;
-
-    const k4_v = f(this.angle + k3_a * dt, this.angularVelocity + k3_v * dt);
-    const k4_a = this.angularVelocity + k3_v * dt;
-
-    this.angularVelocity += (dt / 6) * (k1_v + 2 * k2_v + 2 * k3_v + k4_v);
-    this.angle += (dt / 6) * (k1_a + 2 * k2_a + 2 * k3_a + k4_a);
-
-    // 減衰（空気抵抗）
-    this.angularVelocity *= this.damping;
+  update() {
+    let angularAcceleration = -(PHYSICS_CONFIG.gravity / this.length) * Math.sin(this.angle);
+    this.angularVelocity += angularAcceleration;
+    this.angularVelocity *= PHYSICS_CONFIG.friction;
+    this.angle += this.angularVelocity;
   }
 
   /**
@@ -74,87 +53,82 @@ class Pendulum {
    */
   getSeatPosition(pivotX, pivotY) {
     return {
-      x: pivotX + this.length * Math.sin(this.angle),
-      y: pivotY + this.length * Math.cos(this.angle),
+      x: pivotX + Math.sin(this.angle) * this.length,
+      y: pivotY + Math.cos(this.angle) * this.length,
     };
   }
 
   /**
    * 現在の速度ベクトル（飛行開始時の初速）を取得する
-   * 参考コード準拠: vx = cos(θ) * ω * L, vy = -sin(θ) * ω * L - |ω| * boostFactor
-   * @param {number} boostFactor 上方向ブースト係数（デフォルト14）
    * @returns {{vx: number, vy: number}}
    */
-  getVelocity(boostFactor = 14) {
-    const speed = this.angularVelocity * this.length;
-    // 接線方向の速度 + 上方向ブースト
-    const vx = Math.cos(this.angle) * speed;
-    const vy = -Math.sin(this.angle) * speed - Math.abs(this.angularVelocity) * boostFactor;
+  getVelocity() {
+    const vx = Math.cos(this.angle) * this.angularVelocity * this.length;
+    // 上方向の初速ボーナスを追加
+    const vy = -Math.sin(this.angle) * this.angularVelocity * this.length - Math.abs(this.angularVelocity) * 14;
     return { vx, vy };
   }
 }
 
 /**
- * キャラクターが飛んでいるときの放物線物理状態を管理するクラス
- * 参考コードに合わせて回転・空気抵抗フィールドを追加
+ * 飛んでいるオブジェクト（靴・人間）の放物線物理状態を管理するクラス
  */
 class Projectile {
   /**
+   * @param {string} type 'shoe' か 'human'
    * @param {number} x  初期X座標
    * @param {number} y  初期Y座標
    * @param {number} vx 初速X成分
-   * @param {number} vy 初速Y成分（上向き負）
-   * @param {number} gravity 重力加速度（px/s²）
-   * @param {number} initialAngle 飛び出し時の振り子角度（回転初期値に使用）
+   * @param {number} vy 初速Y成分
+   * @param {number} initialAngle 飛び出し時の振り子角度
+   * @param {number} angularVelocity 飛び出し時の角速度（回転スピード用）
    */
-  constructor(x, y, vx, vy, gravity, initialAngle = 0) {
+  constructor(type, x, y, vx, vy, initialAngle, angularVelocity) {
+    this.type = type;
     this.x = x;
     this.y = y;
     this.vx = vx;
     this.vy = vy;
-    this.gravity = gravity;
-    this.startX = x;  // 飛び出し開始X（距離計算用）
+    this.startX = x;
+
+    this.landed = false;
+    this.dist = 0;
+
+    // タイプごとの物理パラメータ
+    this.gravity = type === 'shoe' ? PHYSICS_CONFIG.shoeGravity : PHYSICS_CONFIG.humanGravity;
+    this.friction = type === 'shoe' ? 0.996 : 0.998;
 
     // 空中回転
-    this.rotation = -initialAngle;  // 初期回転（振り子の角度から）
-    this.vrot = 0;                  // 回転角速度（rad/s で更新）
-
-    // 空気抵抗（参考コードの friction 相当、dt版）
-    this.airFriction = 0.35; // 毎秒の減衰率（exp(-airFriction*dt)を掛ける）
+    this.rotation = type === 'shoe' ? 0 : -initialAngle;
+    this.vrot = angularVelocity * (type === 'shoe' ? 2 : 1.2);
   }
 
   /**
-   * 放物線運動を1ステップ進める
-   * @param {number} dt タイムステップ（秒）
+   * 放物線運動を1フレーム進める
    */
-  update(dt) {
-    // 空気抵抗
-    const decay = Math.exp(-this.airFriction * dt);
-    this.vx *= decay;
-
-    this.vy += this.gravity * dt; // 重力加速
-    this.x += this.vx * dt;
-    this.y += this.vy * dt;
-
-    // 空中回転を更新
-    this.rotation += this.vrot * dt;
+  update() {
+    if (this.landed) return;
+    
+    this.vx *= this.friction;
+    this.vy += this.gravity;
+    this.x += this.vx;
+    this.y += this.vy;
+    this.rotation += this.vrot;
   }
 
   /**
-   * 地面に着地したか判定する
+   * 着地判定を行い、着地していれば物理状態を更新する
    * @param {number} groundY 地面のY座標
-   * @returns {boolean}
+   * @param {number} pivotX 支点X座標（距離計算用）
+   * @returns {boolean} 着地したかどうか（今回初めて着地した場合true）
    */
-  hasLanded(groundY) {
-    return this.y >= groundY;
-  }
-
-  /**
-   * 開始位置からの飛行距離（メートル換算）を返す
-   * @param {number} pixelsPerMeter 1mあたりのピクセル数
-   * @returns {number}
-   */
-  getDistance(pixelsPerMeter) {
-    return Math.max(0, (this.x - this.startX) / pixelsPerMeter);
+  checkLanding(groundY, pivotX) {
+    if (!this.landed && this.y > groundY) {
+      this.y = groundY;
+      this.landed = true;
+      this.dist = (this.x - pivotX) * PHYSICS_CONFIG.meterScale;
+      return true;
+    }
+    return false;
   }
 }

@@ -18,37 +18,55 @@ document.addEventListener('DOMContentLoaded', () => {
     game._resize();
   });
 
-  // ===== 「脚を伸ばす」ボタン =====
-  // タッチデバイス対応（touchstart/touchend でレスポンスよく）
-  const onLegStart = (e) => {
-    e.preventDefault();
-    game.startLegExtend();
-    btnLeg.classList.add('active');
-  };
-  const onLegEnd = (e) => {
-    e.preventDefault();
-    game.stopLegExtend();
-    btnLeg.classList.remove('active');
-  };
+  // レスポンス改善用共通関数
+  const preventScl = (e) => e.preventDefault();
 
-  btnLeg.addEventListener('touchstart', onLegStart, { passive: false });
-  btnLeg.addEventListener('touchend', onLegEnd, { passive: false });
-  btnLeg.addEventListener('touchcancel', onLegEnd, { passive: false });
-  // PCデバッグ用にマウスイベントも対応
-  btnLeg.addEventListener('mousedown', onLegStart);
-  btnLeg.addEventListener('mouseup', onLegEnd);
-  btnLeg.addEventListener('mouseleave', onLegEnd);
+  // ===== 「こぐ！」ボタン =====
+  const btnPump = document.getElementById('btnPump');
+  if (btnPump) {
+    const onPumpStart = (e) => {
+      e.preventDefault();
+      game.startPump();
+      btnPump.classList.add('active');
+    };
+    const onPumpEnd = (e) => {
+      e.preventDefault();
+      game.stopPump();
+      btnPump.classList.remove('active');
+    };
+    btnPump.addEventListener('touchstart', onPumpStart, { passive: false });
+    btnPump.addEventListener('touchend', onPumpEnd, { passive: false });
+    btnPump.addEventListener('touchcancel', onPumpEnd, { passive: false });
+    btnPump.addEventListener('mousedown', onPumpStart);
+    btnPump.addEventListener('mouseup', onPumpEnd);
+    btnPump.addEventListener('mouseleave', onPumpEnd);
+  }
 
-  // ===== 「飛んでいく」ボタン =====
-  const onLaunch = (e) => {
-    e.preventDefault();
-    game.launch();
-    btnLaunch.classList.add('pressed');
-    setTimeout(() => btnLaunch.classList.remove('pressed'), 200);
-  };
+  // ===== 「とばす！」ボタン（靴） =====
+  const btnLaunchShoe = document.getElementById('btnLaunchShoe');
+  if (btnLaunchShoe) {
+    const onLaunchShoe = (e) => {
+      e.preventDefault();
+      game.launch('shoe');
+      btnLaunchShoe.classList.add('pressed');
+      setTimeout(() => btnLaunchShoe.classList.remove('pressed'), 200);
+    };
+    btnLaunchShoe.addEventListener('touchstart', onLaunchShoe, { passive: false });
+    btnLaunchShoe.addEventListener('mousedown', onLaunchShoe);
+  }
 
-  btnLaunch.addEventListener('touchstart', onLaunch, { passive: false });
-  btnLaunch.addEventListener('mousedown', onLaunch);
+  // ===== 「とぶ！」ボタン（人間） =====
+  const btnLaunchHuman = document.getElementById('btnLaunchHuman');
+  if (btnLaunchHuman) {
+    const onLaunchHuman = (e) => {
+      e.preventDefault();
+      game.launch('human');
+      btnLaunchHuman.classList.add('pressed');
+      setTimeout(() => btnLaunchHuman.classList.remove('pressed'), 200);
+    };
+    btnLaunchHuman.addEventListener('touchstart', onLaunchHuman, { passive: false });
+    btnLaunchHuman.addEventListener('mousedown', onLaunchHuman);
+  }
 
   // ===== 結果画面でタップするとリトライ =====
   canvas.addEventListener('touchstart', (e) => {
