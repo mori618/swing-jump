@@ -50,6 +50,7 @@ class Character {
     ctx.save();
     ctx.translate(seatX, seatY);
     ctx.rotate(angle);
+    ctx.scale(1.3, 1.3); // キャラクターサイズを大きくする
 
     // -- 体幹 (胴体) --
     ctx.fillStyle = '#4A90E2';
@@ -150,6 +151,7 @@ class Character {
     // 速度方向に体を傾ける
     const tilt = Math.atan2(vy, vx) * 0.4;
     ctx.rotate(tilt);
+    ctx.scale(1.3, 1.3); // キャラクターサイズを大きくする
 
     // -- 胴体 --
     ctx.fillStyle = '#4A90E2';
