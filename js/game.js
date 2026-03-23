@@ -355,9 +355,7 @@ class Game {
         ctx.arc(i * 900 + 400, -600 + Math.sin(i) * 250, 300, 0, Math.PI * 2);
         ctx.fill();
     }
-
-    this._drawClockGuide(ctx);
-
+    // ===== タイミング円不要のため削除 =====
     // ===== 地面 =====
     ctx.fillStyle = '#94a3b8'; 
     ctx.fillRect(this.pivotX - 200000, this.groundY, 400000, 5000);
