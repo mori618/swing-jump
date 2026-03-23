@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <!-- スマホ最適化: ビューポート固定、ズーム禁止 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#1a1a2e" />
+  <title>ブランコ 飛距離チャレンジ</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- ローディング画面 -->
+  <div id="loading">
+    <h1>🎉 ブランコ！</h1>
+    <p>Loading...</p>
+  </div>
+
+  <!-- ゲームコンテナ -->
+  <div id="gameContainer">
+    <!-- メインキャンバス -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- 操作ボタンエリア（Fixed: 画面下部） -->
+    <div id="buttonArea">
+      <!-- 脚を伸ばすボタン（押している間有効） -->
+      <button id="btnLeg" class="game-btn" type="button">
+        <span class="btn-icon">🦵</span>
+        <span class="btn-label">脚を伸ばす</span>
+      </button>
+
+      <!-- 飛んでいくボタン（タップで即時発動） -->
+      <button id="btnLaunch" class="game-btn" type="button">
+        <span class="btn-icon">🚀</span>
+        <span class="btn-label">飛んでいく！</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- JSファイル読み込み（依存順） -->
+  <script src="js/physics.js"></script>
+  <script src="js/character.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+
+  <!-- ローディング画面を非表示にする -->
+  <script>
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        const loading = document.getElementById('loading');
+        if (loading) loading.classList.add('hidden');
+      }, 300);
+    });
+  </script>
+</body>
+</html>

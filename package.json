@@ -1,0 +1,16 @@
+{
+  "name": "swing-jump",
+  "version": "1.0.0",
+  "description": "物理挙動を使ったブランコ飛距離チャレンジゲーム",
+  "scripts": {
+    "deploy": "gh-pages -d ."
+  },
+  "devDependencies": {
+    "gh-pages": "^6.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/mori618/swing-jump.git"
+  },
+  "homepage": "https://mori618.github.io/swing-jump"
+}
