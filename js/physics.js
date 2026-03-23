@@ -72,8 +72,10 @@ class Pendulum {
 
   /**
    * 指定された角度領域に応じてブースト（加速・減速）を適用する
+   * @param {boolean} isPush こいでいるかどうか
+   * @param {number} boostMultiplier ショップアイテム等による加速力倍率
    */
-  applyBoost(isPush) {
+  applyBoost(isPush, boostMultiplier = 1.0) {
     const ang = this.getNormalizedAngle();
     const isCCW = this.angularVelocity >= 0;
 
@@ -94,7 +96,7 @@ class Pendulum {
         else impulse = TINY;
         
         if (this.canPushBoost) {
-          this.angularVelocity += impulse;
+          this.angularVelocity += impulse * boostMultiplier;
           this.canPushBoost = false;
         }
       } else {
@@ -105,7 +107,7 @@ class Pendulum {
         else impulse = -NORMAL;
 
         if (this.canReleaseBoost) {
-           this.angularVelocity += impulse;
+           this.angularVelocity += impulse * boostMultiplier;
            this.canReleaseBoost = false;
         }
       }
@@ -119,7 +121,7 @@ class Pendulum {
         else impulse = -TINY;
 
         if (this.canReleaseBoost) {
-          this.angularVelocity += impulse;
+          this.angularVelocity += impulse * boostMultiplier;
           this.canReleaseBoost = false;
         }
       } else {
@@ -130,7 +132,7 @@ class Pendulum {
         else impulse = NORMAL;
 
         if (this.canPushBoost) {
-          this.angularVelocity += impulse;
+          this.angularVelocity += impulse * boostMultiplier;
           this.canPushBoost = false;
         }
       }
@@ -207,6 +209,18 @@ class Projectile {
     if (type === 'human' && this.equippedItems.includes('jump_up')) {
       this.vy -= 15; // 飛び出し時の初速を上方向に強化
     }
+
+    // 「体重が軽くなる」アイテム
+    if (type === 'human' && this.equippedItems.includes('light_weight')) {
+      this.gravity *= 0.70; // 飛行中の重力を30%軽減して落ちにくくする
+    }
+
+    // 「体重が重くなる」アイテム
+    if (type === 'human' && this.equippedItems.includes('heavy_weight')) {
+      this.gravity *= 1.30; // 重力を増やして落ちやすくする
+      this.vy *= 0.75;      // 上方向の勢いを削ぐ
+      this.vx *= 1.45;      // 横方向の初速を大幅に引き上げる
+    }
   }
 
   /**
@@ -217,10 +231,15 @@ class Projectile {
     if (this.landed && !this.sliding) return;
 
     if (this.sliding) {
-      // 「こおり」「アイスシューズ」の滑り処理
+      // 「こおり」「アイスシューズ」「チョロ9」の滑り・転がり処理
       const friction = this.equippedItems.includes('ice_shoes') ? 0.995 : 0.98;
       this.vx *= friction;
       this.x += this.vx;
+
+      // チョロ9の場合は横滑りするだけでなく、ゴロゴロと回転しながら転がる
+      if (this.equippedItems.includes('choro_9')) {
+        this.rotation += this.vx * 0.05;
+      }
 
       if (Math.abs(this.vx) < 0.1) {
         this.vx = 0;
@@ -295,6 +314,22 @@ class Projectile {
       }
 
       this.landed = true;
+
+      // 「チョロ9」着地時の爆発ダッシュ処理
+      if (this.type === 'human' && this.equippedItems.includes('choro_9') && this.vx < 0) {
+        // マイナス方向への着地速度を反転して2倍にする
+        this.vx = Math.abs(this.vx) * 2.0;
+
+        // もし支点(pivotX)より左に着地していれば、引っ張った距離(チョロQ効果)としてさらに加速ボーナス
+        if (this.x < pivotX) {
+          const pullbackDist = pivotX - this.x;
+          this.vx += pullbackDist * 0.03; // 引っ張った距離に応じて猛ダッシュ
+        }
+
+        this.sliding = true;
+        this.needResultTrigger = true;
+        return false; // ダッシュ中はまだリザルトに行かない
+      }
 
       // 「こおり」着地後の滑り処理
       if (this.type === 'human' && this.equippedItems.includes('ice') && Math.abs(this.vx) > 1.0) {

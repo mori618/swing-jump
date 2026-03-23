@@ -134,7 +134,8 @@ class Game {
     
     if (this.launchType !== 'human') {
       this.ui.guideTimer = 0;
-      this.pendulum.applyBoost(true);
+      const boostMultiplier = this.save.equippedItems.includes('pump_up') ? 2.5 : 1.0;
+      this.pendulum.applyBoost(true, boostMultiplier);
     }
   }
 
@@ -143,7 +144,8 @@ class Game {
     this.isPushing = false;
     
     if (this.launchType !== 'human') {
-      this.pendulum.applyBoost(false);
+      const boostMultiplier = this.save.equippedItems.includes('pump_up') ? 2.5 : 1.0;
+      this.pendulum.applyBoost(false, boostMultiplier);
     }
   }
 
