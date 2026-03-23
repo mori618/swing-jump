@@ -63,25 +63,7 @@ class Character {
     ctx.beginPath();
     ctx.arc(0, -50, 13, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#E0956A';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // -- 目 --
-    ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.arc(-4, -51, 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(4, -51, 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // -- 笑顔 --
-    ctx.beginPath();
-    ctx.arc(0, -47, 5, 0.2, Math.PI - 0.2);
-    ctx.strokeStyle = '#E0956A';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    // 表情なし
 
     // -- 腕（左右に広げる） --
     ctx.strokeStyle = '#FFDAB9';
@@ -98,38 +80,44 @@ class Character {
     ctx.lineTo(28, -18);
     ctx.stroke();
 
-    // -- 脚（伸ばし状態で前に伸ばす） --
-    const legLength = this.legExtended ? 55 : 30;
-    const legAngle = this.legExtended ? -0.4 : 0.3; // 伸ばすと前に
+    // -- 脚（参考コード仕様: 膝関節あり） --
+    const kneeDx = 14;
+    const kneeDy = 8;
+    const footDx = this.legExtended ? 38 : 6;
+    const footDy = this.legExtended ? 2 : 30;
+    const shoeAngle = this.legExtended ? -0.2 : 0;
 
     ctx.strokeStyle = '#2E5EA8';
     ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+
     // 左脚
     ctx.beginPath();
-    ctx.moveTo(-6, -12);
-    ctx.lineTo(-6 + legLength * Math.sin(legAngle), -12 + legLength * Math.cos(legAngle));
+    ctx.moveTo(-6, -12); // 股関節
+    ctx.lineTo(-6 + kneeDx, -12 + kneeDy); // 膝
     ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-6 + kneeDx, -12 + kneeDy);
+    ctx.lineTo(-6 + footDx, -12 + footDy); // 足首
+    ctx.stroke();
+
     // 右脚
     ctx.beginPath();
-    ctx.moveTo(6, -12);
-    ctx.lineTo(6 + legLength * Math.sin(legAngle), -12 + legLength * Math.cos(legAngle));
+    ctx.moveTo(6, -12); // 股関節
+    ctx.lineTo(6 + kneeDx, -12 + kneeDy); // 膝
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(6 + kneeDx, -12 + kneeDy);
+    ctx.lineTo(6 + footDx, -12 + footDy); // 足首
     ctx.stroke();
 
     // 足（靴）
     ctx.fillStyle = '#333';
     ctx.beginPath();
-    ctx.ellipse(
-      -6 + legLength * Math.sin(legAngle),
-      -12 + legLength * Math.cos(legAngle),
-      6, 4, legAngle, 0, Math.PI * 2
-    );
+    ctx.ellipse(-6 + footDx + 2, -12 + footDy + 2, 7, 4, shoeAngle, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.ellipse(
-      6 + legLength * Math.sin(legAngle),
-      -12 + legLength * Math.cos(legAngle),
-      6, 4, legAngle, 0, Math.PI * 2
-    );
+    ctx.ellipse(6 + footDx + 2, -12 + footDy + 2, 7, 4, shoeAngle, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
@@ -137,95 +125,88 @@ class Character {
   }
 
   /**
-   * 飛行中のキャラクターを描画する（空中回転対応版）
+   * 飛行中のキャラクターを描画する（スイング時と同じポーズ・空中回転対応）
    * @param {number} x        X座標
    * @param {number} y        Y座標
-   * @param {number} vx       X速度（向き判定用）
-   * @param {number} vy       Y速度（姿勢傾き用）
-   * @param {number} rotation 累積回転角（ラジアン）。指定なければ速度から傾きを計算
+   * @param {number} vx       X速度（未使用）
+   * @param {number} vy       Y速度（未使用）
+   * @param {number} rotation 累積回転角（ラジアン）
    */
   drawFlying(x, y, vx, vy, rotation = null) {
     const ctx = this.ctx;
     ctx.save();
     ctx.translate(x, y);
 
-    // 回転：Projectile の累積回転があればそれを使用、なければ速度方向から推定
+    // 累積回転を適用
     if (rotation !== null) {
       ctx.rotate(rotation);
-    } else {
-      const tilt = Math.atan2(vy, vx) * 0.4;
-      ctx.rotate(tilt);
     }
 
-    ctx.scale(1.3, 1.3); // キャラクターサイズを大きくする
+    ctx.scale(1.3, 1.3);
 
-    // -- 胴体（横向き・水平気味） --
+    // -- 体幹 (胴体) -- スイング時と同一
     ctx.fillStyle = '#4A90E2';
     ctx.beginPath();
-    ctx.roundRect(-14, -10, 28, 20, 5);
+    ctx.roundRect(-10, -40, 20, 28, 5);
     ctx.fill();
 
-    // -- 頭 --
+    // -- 頭 -- 表情なし
     ctx.fillStyle = '#FFDAB9';
     ctx.beginPath();
-    ctx.arc(-18, -5, 13, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#E0956A';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // -- 目（興奮した目） --
-    ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.arc(-21, -7, 2.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(-14, -7, 2.5, 0, Math.PI * 2);
+    ctx.arc(0, -50, 13, 0, Math.PI * 2);
     ctx.fill();
 
-    // -- 口（叫び声） --
-    ctx.beginPath();
-    ctx.arc(-17, -2, 5, 0, Math.PI);
-    ctx.fillStyle = '#C0392B';
-    ctx.fill();
-
-    // -- 腕（大きく広げる） --
+    // -- 腕（両腕を上に伸ばしてロープをつかんでいるような姿勢） --
     ctx.strokeStyle = '#FFDAB9';
     ctx.lineWidth = 5;
     ctx.lineCap = 'round';
-    // 前腕（進行方向）
     ctx.beginPath();
-    ctx.moveTo(14, -4);
-    ctx.lineTo(36, -22);
+    ctx.moveTo(-10, -30);
+    ctx.lineTo(-28, -18);
     ctx.stroke();
-    // 後腕
     ctx.beginPath();
-    ctx.moveTo(-2, 8);
-    ctx.lineTo(-20, 26);
+    ctx.moveTo(10, -30);
+    ctx.lineTo(28, -18);
     ctx.stroke();
 
-    // -- 脚（大きく広げる） --
+    // -- 脚（飛行中も同じ脚の動き） --
+    const kneeDx = 14;
+    const kneeDy = 8;
+    const footDx = this.legExtended ? 38 : 6;
+    const footDy = this.legExtended ? 2 : 30;
+    const shoeAngle = this.legExtended ? -0.2 : 0;
+
     ctx.strokeStyle = '#2E5EA8';
     ctx.lineWidth = 6;
     ctx.lineCap = 'round';
-    // 前脚
+
+    // 左脚
     ctx.beginPath();
-    ctx.moveTo(10, 8);
-    ctx.lineTo(28, 28);
+    ctx.moveTo(-6, -12); // 股関節
+    ctx.lineTo(-6 + kneeDx, -12 + kneeDy); // 膝
     ctx.stroke();
-    // 後脚
     ctx.beginPath();
-    ctx.moveTo(-6, 8);
-    ctx.lineTo(-24, 28);
+    ctx.moveTo(-6 + kneeDx, -12 + kneeDy);
+    ctx.lineTo(-6 + footDx, -12 + footDy); // 足首
+    ctx.stroke();
+
+    // 右脚
+    ctx.beginPath();
+    ctx.moveTo(6, -12); // 股関節
+    ctx.lineTo(6 + kneeDx, -12 + kneeDy); // 膝
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(6 + kneeDx, -12 + kneeDy);
+    ctx.lineTo(6 + footDx, -12 + footDy); // 足首
     ctx.stroke();
 
     // 足（靴）
-    ctx.fillStyle = '#222';
+    ctx.fillStyle = '#333';
     ctx.beginPath();
-    ctx.ellipse(28, 28, 8, 4, 0.5, 0, Math.PI * 2);
+    ctx.ellipse(-6 + footDx + 2, -12 + footDy + 2, 7, 4, shoeAngle, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.ellipse(-24, 28, 8, 4, -0.5, 0, Math.PI * 2);
+    ctx.ellipse(6 + footDx + 2, -12 + footDy + 2, 7, 4, shoeAngle, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
@@ -251,29 +232,11 @@ class Character {
     ctx.roundRect(-14, -10, 28, 20, 5);
     ctx.fill();
 
-    // 頭
+    // 頭（表情なし）
     ctx.fillStyle = '#FFDAB9';
     ctx.beginPath();
     ctx.arc(-20, 0, 13, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#E0956A';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // 目（×目：やられた表情）
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    // 左目×
-    ctx.beginPath();
-    ctx.moveTo(-24, -4); ctx.lineTo(-21, -1);
-    ctx.moveTo(-21, -4); ctx.lineTo(-24, -1);
-    ctx.stroke();
-    // 右目×
-    ctx.beginPath();
-    ctx.moveTo(-17, -4); ctx.lineTo(-14, -1);
-    ctx.moveTo(-14, -4); ctx.lineTo(-17, -1);
-    ctx.stroke();
 
     // 腕（投げ出した）
     ctx.strokeStyle = '#FFDAB9';
