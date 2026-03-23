@@ -56,9 +56,11 @@ class GameUI {
   /**
    * 結果を表示する（SaveManagerに記録させてから表示）
    * @param {number} dist 飛行距離（メートル）
+   * @param {string} launchType 飛ばしたもの（'human' or 'shoe'）
    */
-  showResultScreen(dist) {
+  showResultScreen(dist, launchType) {
     this.resultDistance = dist;
+    this.showResultType = launchType;
     this.showResult = true;
     this.resultAlpha = 0;
 
@@ -70,11 +72,19 @@ class GameUI {
 
     // コインHUDのアニメーション開始
     this.coinAnimTimer = 2.5; // 2.5秒かけて増やす
+
+    // ショップボタンを表示
+    const btnOpenShop = document.getElementById('btnOpenShop');
+    if (btnOpenShop) btnOpenShop.classList.remove('hidden');
   }
 
   /** 結果を非表示にする */
   hideResult() {
     this.showResult = false;
+
+    // ショップボタンを非表示
+    const btnOpenShop = document.getElementById('btnOpenShop');
+    if (btnOpenShop) btnOpenShop.classList.add('hidden');
   }
 
   /**
@@ -94,8 +104,12 @@ class GameUI {
     if (this.coinAnimTimer > 0) {
       this.coinAnimTimer -= dt;
       // displayCoins を目標値に向けて増やす
-      const speed = this.earnedCoins / 2.5; // 2.5秒で全部増える
-      this.displayCoins = Math.min(targetCoins, this.displayCoins + speed * dt);
+      const speed = this.earnedCoins / 2.5; // 2.5秒で全部増える（減る）
+      if (this.earnedCoins >= 0) {
+        this.displayCoins = Math.min(targetCoins, this.displayCoins + speed * dt);
+      } else {
+        this.displayCoins = Math.max(targetCoins, this.displayCoins + speed * dt);
+      }
     } else {
       this.displayCoins = targetCoins;
     }
@@ -154,7 +168,7 @@ class GameUI {
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur = 4;
-    ctx.fillText('POWER', W / 2, gaugeY + 13);
+    ctx.fillText(TEXTS.UI_POWER, W / 2, gaugeY + 13);
     ctx.restore();
   }
 
@@ -173,10 +187,10 @@ class GameUI {
     ctx.fillStyle = '#FFD700';
     ctx.font = 'bold 11px "Nunito", sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText('🏆 BEST', 22, 58);
+    ctx.fillText(TEXTS.UI_BEST, 22, 58);
     ctx.fillStyle = 'white';
     ctx.font = 'bold 17px "Nunito", sans-serif';
-    ctx.fillText(`${this.save.bestDistance.toFixed(1)} m`, 22, 76);
+    ctx.fillText(`${this.save.bestDistance.toFixed(1)} ${TEXTS.UI_M}`, 22, 76);
 
     // --- 右: コイン ---
     ctx.fillStyle = 'rgba(0,0,0,0.45)';
@@ -187,7 +201,7 @@ class GameUI {
     ctx.fillStyle = '#FFD700';
     ctx.font = 'bold 11px "Nunito", sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('🪙 COINS', W - 22, 58);
+    ctx.fillText(TEXTS.UI_COINS, W - 22, 58);
     ctx.fillStyle = 'white';
     ctx.font = 'bold 17px "Nunito", sans-serif';
     ctx.fillText(Math.floor(this.displayCoins).toLocaleString(), W - 22, 76);
@@ -205,10 +219,10 @@ class GameUI {
     ctx.fillStyle = '#00E5FF';
     ctx.font = 'bold 11px "Nunito", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('飛行距離', W / 2, H - 58);
+    ctx.fillText(TEXTS.UI_FLIGHT_DIST, W / 2, H - 58);
     ctx.fillStyle = 'white';
     ctx.font = 'bold 22px "Nunito", sans-serif';
-    ctx.fillText(`${this.currentDistance.toFixed(1)} m`, W / 2, H - 40);
+    ctx.fillText(`${this.currentDistance.toFixed(1)} ${TEXTS.UI_M}`, W / 2, H - 40);
     ctx.restore();
   }
 
@@ -236,32 +250,45 @@ class GameUI {
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
+    // ランクメッセージの決定
+    const dist = this.resultDistance;
+    let rankMsg;
+    let titleTxt = TEXTS.RESULT_TITLE_HUMAN;
+
+    if (this.showResultType === 'human') {
+      if (dist < 0)        rankMsg = TEXTS.RANK_H_BACKWARD;
+      else if (dist > 300) rankMsg = TEXTS.RANK_H_LEGEND;
+      else if (dist > 150) rankMsg = TEXTS.RANK_H_MASTER;
+      else if (dist > 60)  rankMsg = TEXTS.RANK_H_GOOD;
+      else                 rankMsg = TEXTS.RANK_H_POOR;
+    } else {
+      titleTxt = TEXTS.RESULT_TITLE_SHOE;
+      if (dist < 0)        rankMsg = TEXTS.RANK_S_BACKWARD;
+      else if (dist > 300) rankMsg = TEXTS.RANK_S_LEGEND;
+      else if (dist > 150) rankMsg = TEXTS.RANK_S_MASTER;
+      else if (dist > 60)  rankMsg = TEXTS.RANK_S_GOOD;
+      else                 rankMsg = TEXTS.RANK_S_POOR;
+    }
+
     // タイトル
     ctx.fillStyle = '#FFD700';
     ctx.font = 'bold 22px "Nunito", sans-serif';
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(0,0,0,0.6)';
     ctx.shadowBlur = 6;
-    ctx.fillText('🎉 結果発表 🎉', W / 2, cardY + 42);
+    ctx.fillText(titleTxt, W / 2, cardY + 42);
 
     // 距離
     ctx.fillStyle = 'white';
     ctx.font = 'bold 54px "Nunito", sans-serif';
-    ctx.fillText(`${this.resultDistance.toFixed(1)}`, W / 2, cardY + 108);
+    ctx.fillText(`${dist.toFixed(1)}`, W / 2, cardY + 108);
     ctx.font = 'bold 18px "Nunito", sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    ctx.fillText('メートル', W / 2, cardY + 130);
+    ctx.fillText(TEXTS.UI_METER, W / 2, cardY + 130);
 
-    // 新記録バッジ OR ベスト表示
-    if (this.isNewRecord) {
-      ctx.fillStyle = '#FF6D00';
-      ctx.font = 'bold 17px "Nunito", sans-serif';
-      ctx.fillText('🌟 新記録！', W / 2, cardY + 158);
-    } else {
-      ctx.fillStyle = 'rgba(255,255,255,0.55)';
-      ctx.font = '13px "Nunito", sans-serif';
-      ctx.fillText(`ベスト: ${this.save.bestDistance.toFixed(1)} m`, W / 2, cardY + 158);
-    }
+    ctx.fillStyle = this.isNewRecord ? '#FF6D00' : 'rgba(255,255,255,0.75)';
+    ctx.font = this.isNewRecord ? 'bold 16px "Nunito", sans-serif' : '14px "Nunito", sans-serif';
+    ctx.fillText(this.isNewRecord ? TEXTS.RESULT_NEW_RECORD + rankMsg : rankMsg, W / 2, cardY + 158);
 
     // コイン獲得表示（仕切り線）
     ctx.strokeStyle = 'rgba(255,255,255,0.2)';
@@ -277,27 +304,28 @@ class GameUI {
 
     ctx.fillStyle = '#FFD700';
     ctx.font = 'bold 14px "Nunito", sans-serif';
-    ctx.fillText('🪙 獲得コイン', W / 2, cardY + 195);
+    ctx.fillText(TEXTS.RESULT_EARNED_COINS, W / 2, cardY + 195);
 
     ctx.fillStyle = 'white';
     ctx.font = 'bold 30px "Nunito", sans-serif';
-    ctx.fillText(`+${this.earnedCoins}`, W / 2, cardY + 230);
+    const signText = this.earnedCoins > 0 ? '+' : '';
+    ctx.fillText(`${signText}${this.earnedCoins}`, W / 2, cardY + 230);
 
     if (this.bonusApplied) {
       ctx.fillStyle = '#FF6D00';
       ctx.font = '12px "Nunito", sans-serif';
-      ctx.fillText(`(基礎 +${baseCoins}  新記録ボーナス +${bonusCoins})`, W / 2, cardY + 248);
+      ctx.fillText(TEXTS.RESULT_BONUS_TEXT(baseCoins, bonusCoins), W / 2, cardY + 248);
     }
 
     // 合計コイン
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.font = '12px "Nunito", sans-serif';
-    ctx.fillText(`合計: ${this.save.coins.toLocaleString()} コイン`, W / 2, cardY + 265);
+    ctx.fillText(TEXTS.RESULT_TOTAL_COINS(this.save.coins.toLocaleString()), W / 2, cardY + 265);
 
     // リトライ
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     ctx.font = '13px "Nunito", sans-serif';
-    ctx.fillText('タップしてもう一度', W / 2, cardY + 283);
+    ctx.fillText(TEXTS.RESULT_RETRY, W / 2, cardY + 283);
 
     ctx.restore();
   }
@@ -316,8 +344,8 @@ class GameUI {
     ctx.fillStyle = 'white';
     ctx.font = '13px "Nunito", sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('👇 脚を伸ばしてパワー', W / 2, H / 2 + 82);
-    ctx.fillText('を溜めよう！', W / 2, H / 2 + 100);
+    ctx.fillText(TEXTS.GUIDE_LINE1, W / 2, H / 2 + 82);
+    ctx.fillText(TEXTS.GUIDE_LINE2, W / 2, H / 2 + 100);
     ctx.restore();
   }
 

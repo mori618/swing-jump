@@ -14,209 +14,158 @@ class Character {
    */
   constructor(ctx) {
     this.ctx = ctx;
-    this.legExtended = false;  // 脚を伸ばしているか
+    this.legExtended = false;  // 脚を伸ばしているか (isPushing)
     this.flyPose = false;      // 飛行ポーズか
   }
 
   /**
-   * ブランコ状態のキャラクターを描画する
+   * ブランコ状態のキャラクターを描画する（座席含む）
    * @param {number} seatX  座席X座標
    * @param {number} seatY  座席Y座標
    * @param {number} angle  振り子の角度（ラジアン）
    * @param {number} pivotX 支点X
    * @param {number} pivotY 支点Y
+   * @param {boolean} hasShoe 靴を履いているか
+   * @param {number} armLength ブランコアームの長さ
    */
-  drawOnSwing(seatX, seatY, angle, pivotX, pivotY) {
+  drawOnSwing(seatX, seatY, angle, pivotX, pivotY, hasShoe, armLength) {
     const ctx = this.ctx;
     ctx.save();
-
-    // ===== ロープを描画 =====
-    ctx.beginPath();
-    ctx.moveTo(pivotX, pivotY);
-    ctx.lineTo(seatX, seatY);
-    ctx.strokeStyle = '#8B6914';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    // ===== 座席（板）を描画 =====
-    ctx.save();
+    
+    // スケール計算（参考コードは armLength / 200 が基準）
+    const s = armLength / 200;
+    
+    // 回転の基点は座席位置（seatX, seatY）
     ctx.translate(seatX, seatY);
-    ctx.rotate(angle); // ブランコの傾きに合わせて回転
-    ctx.fillStyle = '#6B3A2A';
-    ctx.fillRect(-20, -4, 40, 8);
-    ctx.restore();
+    // 参考コードでは -angle
+    ctx.rotate(-angle); 
 
-    // ===== キャラクターを描画（座席の上） =====
-    ctx.save();
-    ctx.translate(seatX, seatY);
-    ctx.rotate(angle);
-    ctx.scale(1.3, 1.3); // キャラクターサイズを大きくする
+    // 板（座席）
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(-22 * s, 0, 44 * s, 8 * s);
 
-    // -- 体幹 (胴体) --
-    ctx.fillStyle = '#4A90E2';
-    ctx.beginPath();
-    ctx.roundRect(-10, -40, 20, 28, 5);
-    ctx.fill();
-
-    // -- 頭 --
-    ctx.fillStyle = '#FFDAB9';
-    ctx.beginPath();
-    ctx.arc(0, -50, 13, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#E0956A';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // -- 目 --
-    ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.arc(-4, -51, 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(4, -51, 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // -- 笑顔 --
-    ctx.beginPath();
-    ctx.arc(0, -47, 5, 0.2, Math.PI - 0.2);
-    ctx.strokeStyle = '#E0956A';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // -- 腕（左右に広げる） --
-    ctx.strokeStyle = '#FFDAB9';
-    ctx.lineWidth = 5;
+    // 胴体
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 14 * s;
     ctx.lineCap = 'round';
-    // 左腕
     ctx.beginPath();
-    ctx.moveTo(-10, -30);
-    ctx.lineTo(-28, -18);
-    ctx.stroke();
-    // 右腕
-    ctx.beginPath();
-    ctx.moveTo(10, -30);
-    ctx.lineTo(28, -18);
+    ctx.moveTo(0, 0); 
+    ctx.lineTo(-5 * s, -45 * s); 
     ctx.stroke();
 
-    // -- 脚（伸ばし状態で前に伸ばす） --
-    const legLength = this.legExtended ? 55 : 30;
-    const legAngle = this.legExtended ? -0.4 : 0.3; // 伸ばすと前に
-
-    ctx.strokeStyle = '#2E5EA8';
-    ctx.lineWidth = 6;
-    // 左脚
+    // 頭
+    ctx.fillStyle = '#fca5a5';
     ctx.beginPath();
-    ctx.moveTo(-6, -12);
-    ctx.lineTo(-6 + legLength * Math.sin(legAngle), -12 + legLength * Math.cos(legAngle));
-    ctx.stroke();
-    // 右脚
-    ctx.beginPath();
-    ctx.moveTo(6, -12);
-    ctx.lineTo(6 + legLength * Math.sin(legAngle), -12 + legLength * Math.cos(legAngle));
-    ctx.stroke();
-
-    // 足（靴）
-    ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.ellipse(
-      -6 + legLength * Math.sin(legAngle),
-      -12 + legLength * Math.cos(legAngle),
-      6, 4, legAngle, 0, Math.PI * 2
-    );
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(
-      6 + legLength * Math.sin(legAngle),
-      -12 + legLength * Math.cos(legAngle),
-      6, 4, legAngle, 0, Math.PI * 2
-    );
+    ctx.arc(-8 * s, -62 * s, 14 * s, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.restore();
+    // 脚
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 10 * s;
+    const kneeX = 22 * s;
+    const kneeY = 4 * s;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(kneeX, kneeY);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(kneeX, kneeY);
+    // 脚を伸ばす（isPushing）かどうかに応じて足首の位置を変える
+    const footX = this.legExtended ? 45 * s : 15 * s;
+    const footY = this.legExtended ? 2 * s : 25 * s;
+    ctx.lineTo(footX, footY);
+    ctx.stroke();
+
+    if (hasShoe) {
+      ctx.save();
+      ctx.translate(footX, footY);
+      this.drawShoe(0, 0, 0, s);
+      ctx.restore();
+    }
+
+    // 腕（ロープを掴む）
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 6 * s;
+    ctx.beginPath();
+    ctx.moveTo(-5 * s, -40 * s); 
+    ctx.lineTo(15 * s, -15 * s); 
+    ctx.stroke();
+
     ctx.restore();
   }
 
   /**
    * 飛行中のキャラクターを描画する
-   * @param {number} x  X座標
-   * @param {number} y  Y座標
-   * @param {number} vx X速度（向き判定用）
-   * @param {number} vy Y速度（姿勢傾き用）
    */
-  drawFlying(x, y, vx, vy) {
+  drawFlying(x, y, vx, vy, rotation, hasShoe, armLength) {
     const ctx = this.ctx;
     ctx.save();
     ctx.translate(x, y);
+    ctx.rotate(rotation);
+    
+    const s = armLength / 200;
 
-    // 速度方向に体を傾ける
-    const tilt = Math.atan2(vy, vx) * 0.4;
-    ctx.rotate(tilt);
-    ctx.scale(1.3, 1.3); // キャラクターサイズを大きくする
-
-    // -- 胴体 --
-    ctx.fillStyle = '#4A90E2';
-    ctx.beginPath();
-    ctx.roundRect(-10, -14, 20, 28, 5);
-    ctx.fill();
-
-    // -- 頭 --
-    ctx.fillStyle = '#FFDAB9';
-    ctx.beginPath();
-    ctx.arc(0, -24, 13, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#E0956A';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // -- 目（興奮した目） --
-    ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.arc(-4, -25, 2.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(4, -25, 2.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // -- うれしそうな口 --
-    ctx.beginPath();
-    ctx.arc(0, -20, 6, 0, Math.PI);
-    ctx.fillStyle = '#C0392B';
-    ctx.fill();
-
-    // -- 腕（大きく広げる） --
-    ctx.strokeStyle = '#FFDAB9';
-    ctx.lineWidth = 5;
+    // 胴体
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 14 * s;
     ctx.lineCap = 'round';
     ctx.beginPath();
-    ctx.moveTo(-10, -5);
-    ctx.lineTo(-35, -20);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(10, -5);
-    ctx.lineTo(35, -20);
+    ctx.moveTo(0, 0); 
+    ctx.lineTo(-30 * s, -15 * s); 
     ctx.stroke();
 
-    // -- 脚（大きく広げる） --
-    ctx.strokeStyle = '#2E5EA8';
-    ctx.lineWidth = 6;
+    // 頭
+    ctx.fillStyle = '#fca5a5';
     ctx.beginPath();
-    ctx.moveTo(-6, 14);
-    ctx.lineTo(-20, 38);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(6, 14);
-    ctx.lineTo(20, 38);
-    ctx.stroke();
-
-    // 足
-    ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.ellipse(-20, 38, 7, 4, -0.3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(20, 38, 7, 4, 0.3, 0, Math.PI * 2);
+    ctx.arc(-45 * s, -20 * s, 14 * s, 0, Math.PI * 2);
     ctx.fill();
 
+    // 脚
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 10 * s;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(35 * s, 5 * s);
+    ctx.stroke();
+
+    // 腕
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 8 * s;
+    ctx.beginPath();
+    ctx.moveTo(-15 * s, -5 * s);
+    ctx.lineTo(25 * s, -30 * s);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  /**
+   * 着地後のキャラクター（参考コードに独自のものがないためFlyingを地面で描画）
+   */
+  drawLanded(x, y, rotation, armLength) {
+    // 飛行中のポーズのまま回転０（地面にべたっとする角度ならMath.PI/2など）で描画
+    this.drawFlying(x, y, 0, 0, Math.PI * 0.4, false, armLength);
+  }
+
+  /**
+   * 単独の靴を描画する
+   */
+  drawShoe(x, y, rotation, s) {
+    const ctx = this.ctx;
+    ctx.save();
+    if (x !== 0 || y !== 0) {
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+    }
+    ctx.fillStyle = "white";
+    ctx.strokeStyle = "#334155";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    ctx.roundRect(-8 * s, -4 * s, 18 * s, 10 * s, 4 * s);
+    ctx.fill();
+    ctx.stroke();
     ctx.restore();
   }
 }
