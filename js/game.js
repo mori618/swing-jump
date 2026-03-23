@@ -77,12 +77,16 @@ class Game {
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
 
-    // 支点と地面をサイズに合わせて再計算
+    // 支点を画面中央やや上に下げる（回転時に見切れないように 28% -> 45%）
     this.pivotX = this.canvas.width / 2;
-    this.pivotY = this.canvas.height * 0.28;  // 上から28%
-    this.groundY = this.pivotY + 220;         // 支点から220px下を地面に
-    // pendulum が既에存在する場合はロープ長も更新
+    this.pivotY = this.canvas.height * 0.45;
+    
+    // pendulum が存在する場合はロープ長も更新
     const ropeLen = Math.min(this.canvas.width, this.canvas.height) * 0.28;
+    
+    // 地面はロープ長 ＋ キャラクター沈み込み分 ＋ 余白
+    this.groundY = this.pivotY + ropeLen + 80;
+    
     if (this.pendulum) {
       this.pendulum.baseLength = ropeLen;
     }
