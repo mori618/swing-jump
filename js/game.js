@@ -44,7 +44,7 @@ class Game {
     this.targetCameraX = 0;
 
     // --- 各モジュールの初期化 ---
-    this.pendulum = new Pendulum(120, this.GRAVITY); // ロープ長120px
+    this.pendulum = new Pendulum(180, this.GRAVITY); // ロープ長180px
     this.character = new Character(this.ctx);
     this.save = new SaveManager();         // セーブ管理
     this.ui = new GameUI(this.save);       // UIにセーブマネージャーを渡す
@@ -75,8 +75,8 @@ class Game {
     this.canvas.height = window.innerHeight;
     this.groundY = this.canvas.height - 80;
     this.pivotX = this.canvas.width / 2;
-    // 支点は地面から220px上（A字型ブランコの適切な高さ）
-    this.pivotY = this.groundY - 220;
+    // 支点は地面から320px上
+    this.pivotY = this.groundY - 320;
   }
 
   // ===== 背景オブジェクト生成 =====
@@ -102,7 +102,7 @@ class Game {
 
   // ===== ゲームリセット =====
   reset() {
-    this.pendulum = new Pendulum(120, this.GRAVITY); // ロープ長120px
+    this.pendulum = new Pendulum(180, this.GRAVITY); // ロープ長180px
     this.pendulum.angle = Math.PI * 0.5;
     this.pendulum.angularVelocity = 0;
     this.state = STATE.SWINGING;
