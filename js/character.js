@@ -98,13 +98,34 @@ class Character {
   /**
    * 飛行中のキャラクターを描画する
    */
-  drawFlying(x, y, vx, vy, rotation, hasShoe, armLength) {
+  drawFlying(x, y, vx, vy, rotation, hasShoe, armLength, isParagliding = false) {
     const ctx = this.ctx;
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(rotation);
     
     const s = armLength / 200;
+
+    // パラグライダーの描画
+    if (isParagliding) {
+      // 紐の描画
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 2 * s;
+      ctx.beginPath();
+      ctx.moveTo(0, 0); ctx.lineTo(-10 * s, -110 * s);
+      ctx.moveTo(0, 0); ctx.lineTo(50 * s, -70 * s);
+      ctx.moveTo(0, 0); ctx.lineTo(-70 * s, -70 * s);
+      ctx.stroke();
+
+      // 三角形のパラグライダー（キャノピー）
+      ctx.fillStyle = '#f59e0b'; // オレンジ色
+      ctx.beginPath();
+      ctx.moveTo(-10 * s, -110 * s); // 頂点
+      ctx.lineTo(50 * s, -70 * s);   // 前の下
+      ctx.lineTo(-70 * s, -70 * s);  // 後ろの下
+      ctx.closePath();
+      ctx.fill();
+    }
 
     // 胴体
     ctx.strokeStyle = '#334155';

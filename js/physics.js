@@ -225,6 +225,11 @@ class Projectile {
       this.vy *= 0.75;      // 上方向の勢いを削ぐ
       this.vx *= 1.45;      // 横方向の初速を大幅に引き上げる
     }
+
+    // 「パラグライダー」のデメリット（装備しているだけで少し重くなる）
+    if (type === 'human' && this.equippedItems.includes('paraglider')) {
+      this.gravity *= 1.25; // 25%重くする（少し重たいデメリット）
+    }
   }
 
   /**
@@ -256,17 +261,18 @@ class Projectile {
     if (this.type === 'human' && this.equippedItems.includes('paraglider') && isPushing) {
       // 重力を軽減し、落下速度に制限をかける
       this.vy += this.gravity * 0.15;
-      if (this.vy > 2.5) this.vy *= 0.92; // ゆっくり落ちる
+      // 速度制限を少し緩めて落下を早める（滑空の角度を下げる）
+      if (this.vy > 3.2) this.vy *= 0.92; 
       
-      // 前進する力(横方向の加速) + 減速(摩擦)少なめ
-      this.vx += 0.15;
+      // 前進する力(横方向の加速)を少し弱める
+      this.vx += 0.12;
       this.vx *= 0.998;
 
       this.x += this.vx;
       this.y += this.vy;
 
-      // パラグライダーを開いている時は、回転をほぼ0(水平姿勢)へ近づける
-      this.rotation += (0 - this.rotation) * 0.1;
+      // パラグライダーを開いている時は、少し下向きの角度（0.2ラジアン程度）へ近づける
+      this.rotation += (0.2 - this.rotation) * 0.1;
       this.vrot *= 0.5; // 回転慣性も殺す
     } else {
       // 通常の放物線運動
