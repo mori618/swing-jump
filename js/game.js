@@ -263,27 +263,15 @@ class Game {
     if (this.state === STATE.FLYING || this.state === STATE.RESULT) {
       let primaryTarget = null;
       this.projectiles.forEach(p => {
-        p.update(this.isPushing);
-        if (p.checkLanding(this.groundY, this.startPivotX)) {
-          if (p.type === 'human') {
-            if (this.swingJumps === 1) {
-              // 着地後、再度ブランコに戻る（RESULTへは行かない）
-              this.pivotX = p.x;
-              this.state = STATE.SWINGING;
-              this.launchType = '';
-              this.projectiles = [];
-              this.pendulum = new Pendulum(this.pendulum.length);
-              this.isPushing = false;
-            } else {
+        if (!p.landed) {
+          p.update();
+          if (p.checkLanding(this.groundY, this.pivotX)) {
+            if (p.type === 'human' || this.launchType === 'shoe') {
               this.state = STATE.RESULT;
               this.ui.showResultScreen(p.dist, p.type);
             }
-          } else if (this.launchType === 'shoe') {
-            this.state = STATE.RESULT;
-            this.ui.showResultScreen(p.dist, p.type);
           }
         }
-        
         if (p.type === 'human') primaryTarget = p;
         else if (!primaryTarget) primaryTarget = p; // shoe falls back
       });
@@ -292,32 +280,14 @@ class Game {
         const screenCenterX = this.canvas.width / 2;
         const screenCenterY = this.canvas.height / 2;
 
-        // キャラクターを画面の少し左下寄りに配置するようにカメラの目標をセット（画面内に確実に収める）
-        this.cam.targetX = primaryTarget.x - screenCenterX * 0.6;
-        this.cam.targetY = primaryTarget.y - screenCenterY * 0.6;
+        this.cam.targetX = Math.max(0, primaryTarget.x - screenCenterX * 0.4);
+        this.cam.targetY = Math.max(0, primaryTarget.y - screenCenterY * 0.6);
 
-        // 速度が速いほどズームアウトするように
-        const speed = Math.sqrt(primaryTarget.vx ** 2 + primaryTarget.vy ** 2);
-        // 速度0で1.1倍、速度が大きいほど最大0.35倍までズームアウト
-        const targetZoom = Math.max(0.35, 1.1 - (speed * 0.015)); 
-        // ズームを滑らかに補間
-        this.cam.zoom += (targetZoom - this.cam.zoom) * 0.1;
+        const xDiff = Math.abs(primaryTarget.x - this.pivotX);
+        this.cam.zoom = Math.max(0.25, 1 - xDiff * 0.00012);
 
-        // 飛行中のみカメラ追従を素早く・強力にする
-        if (this.state === STATE.FLYING) {
-          this.cam.followSpeed = 0.35;
-        }
-
-        this.ui.setDistance((primaryTarget.x - this.startPivotX) * PHYSICS_CONFIG.meterScale);
+        this.ui.setDistance((primaryTarget.x - this.pivotX) * PHYSICS_CONFIG.meterScale);
       }
-    } else if (this.state === STATE.SWINGING && this.swingJumps === 1) {
-      // 2回目のジャンプ準備中のカメラ追従
-      const screenCenterX = this.canvas.width / 2;
-      const screenCenterY = this.canvas.height / 2;
-      this.cam.targetX = this.pivotX - screenCenterX;
-      this.cam.targetY = this.pivotY - screenCenterY * 0.6;
-      this.cam.zoom += (1.0 - this.cam.zoom) * 0.1;
-      this.cam.followSpeed = 0.1;
     }
 
     // カメラの追従
@@ -419,7 +389,8 @@ class Game {
     this.projectiles.forEach(p => {
       if (p.type === 'human') {
         if (!p.landed) {
-          this.character.drawFlying(p.x, p.y, p.vx, p.vy, p.rotation, false, this.pendulum.length);
+          const isParagliding = p.equippedItems.includes('paraglider') && this.isPushing;
+          this.character.drawFlying(p.x, p.y, p.vx, p.vy, p.rotation, false, this.pendulum.length, isParagliding);
           
           if (this.swingJumps === 1) {
             // ブランコごと飛んでいるエフェクト（簡易描画）
