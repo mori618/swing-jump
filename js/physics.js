@@ -10,9 +10,9 @@
  */
 const PHYSICS_CONFIG = {
   gravity: 0.22,
-  friction: 0.9985,     
-  pushImpulse: 0.026,   
-  releaseImpulse: 0.014, 
+  friction: 0.9985,
+  pushImpulse: 0.026,
+  releaseImpulse: 0.014,
   shoeGravity: 0.15,
   humanGravity: 0.18,
   meterScale: 0.02
@@ -48,7 +48,7 @@ class Pendulum {
    */
   update() {
     let angularAcceleration = -(PHYSICS_CONFIG.gravity / this.length) * Math.sin(this.angle);
-    
+
     // パッシブ効果：左半分で加速、右半分で減速
     const ang = this.getNormalizedAngle(); // -PI to PI
     if (this.angularVelocity > 0) { // 左回転(CCW)
@@ -94,7 +94,7 @@ class Pendulum {
         else if (ang >= -Math.PI / 6 && ang < 0) impulse = NORMAL;
         else if (ang >= 0 && ang < Math.PI / 2) impulse = SMALL;
         else impulse = TINY;
-        
+
         if (this.canPushBoost) {
           const actualImpulse = impulse > 0 ? impulse * boostMultiplier : impulse;
           this.angularVelocity += actualImpulse;
@@ -108,9 +108,9 @@ class Pendulum {
         else impulse = -NORMAL;
 
         if (this.canReleaseBoost) {
-           const actualImpulse = impulse > 0 ? impulse * boostMultiplier : impulse;
-           this.angularVelocity += actualImpulse;
-           this.canReleaseBoost = false;
+          const actualImpulse = impulse > 0 ? impulse * boostMultiplier : impulse;
+          this.angularVelocity += actualImpulse;
+          this.canReleaseBoost = false;
         }
       }
     } else { // CW
@@ -228,7 +228,7 @@ class Projectile {
 
     // 「パラグライダー」のデメリット（装備しているだけで少し重くなる）
     if (type === 'human' && this.equippedItems.includes('paraglider')) {
-      this.gravity *= 1.25; // 25%重くする（少し重たいデメリット）
+      this.gravity *= 1.5; // 25%重くする（少し重たいデメリット）
     }
   }
 
@@ -241,7 +241,7 @@ class Projectile {
 
     if (this.sliding) {
       // 「こおり」「アイスシューズ」「チョロ9」の滑り・転がり処理
-      const friction = this.equippedItems.includes('ice_shoes') ? 0.995 : 0.98;
+      const friction = this.equippedItems.includes('ice_shoes') ? 0.998 : 0.99;
       this.vx *= friction;
       this.x += this.vx;
 
@@ -262,8 +262,8 @@ class Projectile {
       // 重力を軽減し、落下速度に制限をかける
       this.vy += this.gravity * 0.15;
       // 速度制限を少し緩めて落下を早める（滑空の角度を下げる）
-      if (this.vy > 3.2) this.vy *= 0.92; 
-      
+      if (this.vy > 3.2) this.vy *= 0.92;
+
       // 前進する力(横方向の加速)を少し弱める
       this.vx += 0.12;
       this.vx *= 0.998;
@@ -295,17 +295,17 @@ class Projectile {
   checkLanding(groundY, pivotX) {
     if (!this.landed && this.y > groundY) {
       this.y = groundY;
-      
+
       // 「スーパーボール」バウンド処理
       // 最大3回までバウンドするように制限
       if (this.type === 'human' && this.equippedItems.includes('super_ball') && this.bounceCount < 3) {
-        const dropHeight = this.maxAltitude + groundY; 
-        
+        const dropHeight = this.maxAltitude + groundY;
+
         // 落下距離からバウンド力を計算。回数(bounceCount)を重ねるごとに係数を減らして高さを小さくする
-        const baseFactor = 0.40; 
+        const baseFactor = 0.40;
         const decay = Math.pow(0.75, this.bounceCount);
         let bounceVy = -Math.sqrt(Math.max(0, dropHeight)) * baseFactor * decay;
-        
+
         if (this.equippedItems.includes('jump_up')) {
           bounceVy *= 1.35; // ジャンプ力アップでも跳ねる
         }
@@ -327,13 +327,13 @@ class Projectile {
 
       // 「チョロ9」着地時の爆発ダッシュ処理
       if (this.type === 'human' && this.equippedItems.includes('choro_9') && this.vx < 0) {
-        // マイナス方向への着地速度を反転して2倍にする
-        this.vx = Math.abs(this.vx) * 2.0;
+        // マイナス方向への着地速度を反転してさらに強力に加速（2倍→4倍）
+        this.vx = Math.abs(this.vx) * 4.0;
 
         // もし支点(pivotX)より左に着地していれば、引っ張った距離(チョロQ効果)としてさらに加速ボーナス
         if (this.x < pivotX) {
           const pullbackDist = pivotX - this.x;
-          this.vx += pullbackDist * 0.03; // 引っ張った距離に応じて猛ダッシュ
+          this.vx += pullbackDist * 0.07; // 引っ張った距離に応じて猛ダッシュ（0.03→0.07）
         }
 
         this.sliding = true;
@@ -343,11 +343,11 @@ class Projectile {
 
       // 「こおり」着地後の滑り処理
       if (this.type === 'human' && this.equippedItems.includes('ice') && Math.abs(this.vx) > 1.0) {
-        // 「アイスシューズ」ペナルティ：落下速度が速すぎると着地失敗
-        if (this.equippedItems.includes('ice_shoes') && this.vy > 14) {
-          this.vx *= 0.3; // ズザザッと大きく減速
+        // 「アイスシューズ」ペナルティ：落下速度が速すぎると着地失敗（制限を少し緩和 14->16, 0.3->0.5）
+        if (this.equippedItems.includes('ice_shoes') && this.vy > 16) {
+          this.vx *= 0.5; // ズザザッと減速
         }
-        
+
         this.sliding = true;
         this.needResultTrigger = true;
         return false; // まだゲームは終わらない
