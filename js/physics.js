@@ -79,10 +79,10 @@ class Pendulum {
     const ang = this.getNormalizedAngle();
     const isCCW = this.angularVelocity >= 0;
 
-    const TINY = 0.010;
-    const SMALL = 0.018;
-    const NORMAL = 0.026;
-    const HUGE = 0.045;
+    const TINY = 0.008;
+    const SMALL = 0.015;
+    const NORMAL = 0.022;
+    const HUGE = 0.038;
 
     let impulse = 0;
 
