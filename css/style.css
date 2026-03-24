@@ -400,3 +400,118 @@ html, body {
   color: rgba(255,255,255,0.3);
   pointer-events: none;
 }
+/* ===== 結果表示モーダル ===== */
+#resultModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 30, 0.78); /* 半透明の暗い背景 */
+  z-index: 300;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(4px);
+  transition: opacity 0.4s ease;
+  padding: 20px;
+}
+#resultModal.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.result-card {
+  width: 100%;
+  max-width: 310px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes modalPop {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+#resultTitle {
+  margin: 0 0 10px;
+  color: #FFD700;
+  font-size: 22px;
+  font-weight: 900;
+  text-shadow: 0 4px 6px rgba(0,0,0,0.6);
+}
+
+.result-distance {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+#resultDistValue {
+  color: white;
+  font-size: 54px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.result-distance .unit {
+  color: rgba(255,255,255,0.8);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.result-rank {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+  text-align: center;
+  margin: 10px 0;
+}
+
+.result-divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 15px 0;
+}
+
+.result-coins {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.result-label {
+  color: #FFD700;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.earned-coins {
+  color: white;
+  font-size: 30px;
+  font-weight: 900;
+}
+
+.bonus-text {
+  color: #FF6D00;
+  font-size: 12px;
+}
+
+.total-coins {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.retry-guide {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
+  margin: 0;
+}

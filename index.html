@@ -22,8 +22,8 @@
     <!-- メインキャンバス -->
     <canvas id="gameCanvas"></canvas>
 
-    <!-- ショップ開くボタン（結果画面用） -->
-    <button id="btnOpenShop" class="shop-open-btn hidden">🛒 ショップ</button>
+    <!-- ショップ開くボタン（常時アクセス可能） -->
+    <button id="btnOpenShop" class="shop-open-btn">🛒 ショップ</button>
 
     <!-- 操作ボタンエリア（Fixed: 画面下部） -->
     <div id="buttonArea">
@@ -58,6 +58,29 @@
       <div id="shopItemList" class="shop-item-list">
         <!-- アイテムが動的に追加される -->
       </div>
+    </div>
+  </div>
+
+  <!-- 結果表示画面モーダル -->
+  <div id="resultModal" class="hidden">
+    <div class="result-card">
+      <h2 id="resultTitle">着地成功！</h2>
+      <div class="result-distance">
+        <span id="resultDistValue">0.0</span>
+        <span class="unit">メートル</span>
+      </div>
+      <p id="resultRank" class="result-rank">もっとスイングを極めて高く飛ぼう！</p>
+      
+      <div class="result-divider"></div>
+      
+      <div class="result-coins">
+        <div class="result-label">獲得コイン</div>
+        <div id="earnedCoinValue" class="earned-coins">+0</div>
+        <div id="bonusText" class="bonus-text hidden">（飛距離ボーナス +20）</div>
+      </div>
+      
+      <div id="totalCoinsText" class="total-coins">合計: 0 コイン</div>
+      <p class="retry-guide">タップしてもう一度</p>
     </div>
   </div>
 

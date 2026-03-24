@@ -33,9 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnOpenShop = document.getElementById('btnOpenShop');
   if (btnOpenShop) {
     btnOpenShop.addEventListener('click', () => {
-      // ショップを閉じた時にリザルトやHUDを最新のコイン等で更新するために game.ui.draw が呼ばれるが、ここでは特にコールバック処理は不要と想定
+      game.paused = true; // ゲームを一時停止
       shop.open(() => {
-        // 閉じた後の処理が必要であればここに書く
+        game.paused = false; // ショップを閉じたら再開
       });
     });
   }
@@ -108,14 +108,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ===== 結果画面でタップするとリトライ =====
-  canvas.addEventListener('touchstart', (e) => {
+  const onReset = () => {
     if (game.state === 'RESULT') {
       game.reset();
     }
-  }, { passive: true });
-  canvas.addEventListener('mousedown', () => {
-    if (game.state === 'RESULT') {
-      game.reset();
-    }
-  });
+  };
+
+  canvas.addEventListener('touchstart', onReset, { passive: true });
+  canvas.addEventListener('mousedown', onReset);
+
+  const resultModal = document.getElementById('resultModal');
+  if (resultModal) {
+    resultModal.addEventListener('touchstart', onReset, { passive: true });
+    resultModal.addEventListener('mousedown', onReset);
+  }
 });
