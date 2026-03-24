@@ -182,13 +182,8 @@ class Game {
       this.swingJumps = 2;
     }
 
-    // バレル装備時は発射方向と速度を上書き（ブランコの角速度を勢いとして使い 0.8 倍）
-    if (type === 'human' && this.save.equippedItems.includes('barrel')) {
-      const rawSpeed = Math.abs(this.pendulum.angularVelocity) * this.pendulum.length;
-      const speed = rawSpeed * 0.8;
-      vx = Math.cos(this.barrelAngle) * speed;
-      vy = Math.sin(this.barrelAngle) * speed;
-    }
+    // バレル装備時は Projectile コンストラクタに自然な速度を渡す
+    // （発射後に別途強制上書きするため、ここでは上書きしない）
 
     const p = new Projectile(
       type,
@@ -206,13 +201,15 @@ class Game {
     this.cam.followSpeed = 0.25;
 
     // バレル装備時は Projectile 生成後に速度を強制上書き
-    // （jump_up 等他アイテムの速度補正より後に適用することで方向を正確に保つ）
-    // 速度スカラーは通常発射の自然な速度ベクトルの大きさ × 0.8 とすることで
-    // どの角度に向けても均一な勢いを保証する
+    // コンストラクタ内の jump_up 等の補正が全て終わった後に適用することで
+    // どのアイテムを組み合わせても方向・勢いが正確に保たれる
+    // バレル装備時は Projectile 生成後に「向き」と「勢い」を強制上書き
+    // コンストラクタ内の jump_up 等の全アイテム補正が適用された後のベクトルから
+    // その「大きさ（スカラー）」だけを抽出し、バレル方向に転向する。
+    // これにより、アイテムの恩恵を維持しつつ、どの方向にも本来の勢いの0.8倍で飛ばせる。
     if (type === 'human' && this.save.equippedItems.includes('barrel')) {
-      const naturalVel = this.pendulum.getVelocity();
-      const naturalSpeed = Math.sqrt(naturalVel.vx ** 2 + naturalVel.vy ** 2);
-      const speed = Math.max(naturalSpeed, 5) * 0.8; // 最低限の勢いを保証
+      const naturalSpeed = Math.sqrt(p.vx ** 2 + p.vy ** 2);
+      const speed = Math.max(naturalSpeed, 8) * 0.8; // 最低限の勢いを保証
       p.vx = Math.cos(this.barrelAngle) * speed;
       p.vy = Math.sin(this.barrelAngle) * speed;
     }
@@ -454,6 +451,10 @@ class Game {
     // ===== バレル描画（SWINGING 中・バレル装備時）=====
     if (this.save.equippedItems.includes('barrel') && this.launchType !== 'human') {
       this._drawBarrel(ctx);
+      // ドラッグ中や角度変更時は UI (slider) を即座に同期
+      if (this.barrelDragging) {
+        this._syncBarrelUI();
+      }
     }
 
     ctx.restore(); // カメラ変換終了
@@ -702,5 +703,14 @@ class Game {
     }
 
     ctx.restore();
+  }
+
+  // ===== UI スライダーとの同期（ドラッグ操作を HTML 側に反映） =====
+  _syncBarrelUI() {
+    const deg = Math.round(((this.barrelAngle * 180 / Math.PI) % 360 + 360) % 360);
+    const slider = document.getElementById('barrelSlider');
+    const label = document.getElementById('barrelDegLabel');
+    if (slider) slider.value = deg;
+    if (label) label.textContent = `${deg}°`;
   }
 }
