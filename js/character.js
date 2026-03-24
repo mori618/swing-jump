@@ -106,57 +106,55 @@ class Character {
     
     const s = armLength / 200;
 
-    // パラグライダーの描画
+    // パラグライダーの描画（起動中はキャラクターを三角形に置き換える）
     if (isParagliding) {
-      // 紐の描画
-      ctx.strokeStyle = '#cbd5e1';
-      ctx.lineWidth = 2 * s;
-      ctx.beginPath();
-      ctx.moveTo(0, 0); ctx.lineTo(-10 * s, -110 * s);
-      ctx.moveTo(0, 0); ctx.lineTo(50 * s, -70 * s);
-      ctx.moveTo(0, 0); ctx.lineTo(-70 * s, -70 * s);
-      ctx.stroke();
-
-      // 三角形のパラグライダー（キャノピー）
+      // 三角形のパラグライダー（キャノピー兼キャラクター）
       ctx.fillStyle = '#f59e0b'; // オレンジ色
       ctx.beginPath();
-      ctx.moveTo(-10 * s, -110 * s); // 頂点
-      ctx.lineTo(50 * s, -70 * s);   // 前の下
-      ctx.lineTo(-70 * s, -70 * s);  // 後ろの下
+      ctx.moveTo(0, -20 * s);      // 頂点
+      ctx.lineTo(40 * s, 20 * s);   // 右下
+      ctx.lineTo(-40 * s, 20 * s);  // 左下
       ctx.closePath();
       ctx.fill();
+      
+      // 装飾用のライン
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 2 * s;
+      ctx.beginPath();
+      ctx.moveTo(0, -20 * s); ctx.lineTo(0, 20 * s);
+      ctx.stroke();
+    } else {
+      // 胴体
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 14 * s;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(0, 0); 
+      ctx.lineTo(-30 * s, -15 * s); 
+      ctx.stroke();
+
+      // 頭
+      ctx.fillStyle = '#fca5a5';
+      ctx.beginPath();
+      ctx.arc(-45 * s, -20 * s, 14 * s, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 脚
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 10 * s;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(35 * s, 5 * s);
+      ctx.stroke();
+
+      // 腕
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 8 * s;
+      ctx.beginPath();
+      ctx.moveTo(-15 * s, -5 * s);
+      ctx.lineTo(25 * s, -30 * s);
+      ctx.stroke();
     }
-
-    // 胴体
-    ctx.strokeStyle = '#334155';
-    ctx.lineWidth = 14 * s;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(0, 0); 
-    ctx.lineTo(-30 * s, -15 * s); 
-    ctx.stroke();
-
-    // 頭
-    ctx.fillStyle = '#fca5a5';
-    ctx.beginPath();
-    ctx.arc(-45 * s, -20 * s, 14 * s, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 脚
-    ctx.strokeStyle = '#334155';
-    ctx.lineWidth = 10 * s;
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(35 * s, 5 * s);
-    ctx.stroke();
-
-    // 腕
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 8 * s;
-    ctx.beginPath();
-    ctx.moveTo(-15 * s, -5 * s);
-    ctx.lineTo(25 * s, -30 * s);
-    ctx.stroke();
 
     ctx.restore();
   }

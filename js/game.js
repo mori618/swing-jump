@@ -264,7 +264,7 @@ class Game {
       let primaryTarget = null;
       this.projectiles.forEach(p => {
         if (!p.landed) {
-          p.update();
+          p.update(this.isPushing);
           if (p.checkLanding(this.groundY, this.pivotX)) {
             if (p.type === 'human' || this.launchType === 'shoe') {
               this.state = STATE.RESULT;
@@ -280,8 +280,8 @@ class Game {
         const screenCenterX = this.canvas.width / 2;
         const screenCenterY = this.canvas.height / 2;
 
-        this.cam.targetX = Math.max(0, primaryTarget.x - screenCenterX * 0.4);
-        this.cam.targetY = Math.max(0, primaryTarget.y - screenCenterY * 0.6);
+        this.cam.targetX = primaryTarget.x - screenCenterX * 0.4;
+        this.cam.targetY = primaryTarget.y - screenCenterY * 0.6;
 
         const xDiff = Math.abs(primaryTarget.x - this.pivotX);
         this.cam.zoom = Math.max(0.25, 1 - xDiff * 0.00012);
