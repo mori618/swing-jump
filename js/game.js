@@ -207,9 +207,12 @@ class Game {
 
     // バレル装備時は Projectile 生成後に速度を強制上書き
     // （jump_up 等他アイテムの速度補正より後に適用することで方向を正確に保つ）
+    // 速度スカラーは通常発射の自然な速度ベクトルの大きさ × 0.8 とすることで
+    // どの角度に向けても均一な勢いを保証する
     if (type === 'human' && this.save.equippedItems.includes('barrel')) {
-      const rawSpeed = Math.abs(this.pendulum.angularVelocity) * this.pendulum.length;
-      const speed = Math.max(rawSpeed, 3) * 0.8; // 最低限の勢いを保証
+      const naturalVel = this.pendulum.getVelocity();
+      const naturalSpeed = Math.sqrt(naturalVel.vx ** 2 + naturalVel.vy ** 2);
+      const speed = Math.max(naturalSpeed, 5) * 0.8; // 最低限の勢いを保証
       p.vx = Math.cos(this.barrelAngle) * speed;
       p.vy = Math.sin(this.barrelAngle) * speed;
     }
@@ -588,7 +591,7 @@ class Game {
 
   // ===== バレルの円半径を返す =====
   _getBarrelRadius() {
-    return this.pendulum.length * 1.2 + 35;
+    return this.pendulum.length * 0.85 + 10;
   }
 
   // ===== バレルのドラッグイベント登録 =====
