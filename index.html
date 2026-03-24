@@ -39,6 +39,18 @@
           <span class="btn-icon">🚀</span>
           <span class="btn-label">とぶ！</span>
         </button>
+
+        <!-- バレル角度コントロール（バレル装備中のみ表示） -->
+        <div id="barrelControl" class="barrel-control hidden">
+          <div class="barrel-control-header">
+            <span class="barrel-icon">🛢️</span>
+            <span class="barrel-title">バレル角度</span>
+            <span id="barrelDegLabel" class="barrel-deg">315°</span>
+          </div>
+          <div class="barrel-slider-wrap">
+            <input type="range" id="barrelSlider" class="barrel-slider" min="0" max="359" value="315">
+          </div>
+        </div>
         
         <p class="warning-text">⚠ 非常に危険ですので、実際のブランコでは絶対に真似をしないでください。</p>
       </div>

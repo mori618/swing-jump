@@ -122,4 +122,45 @@ document.addEventListener('DOMContentLoaded', () => {
     resultModal.addEventListener('touchstart', onReset, { passive: true });
     resultModal.addEventListener('mousedown', onReset);
   }
+
+  // ===== バレルスライダー連動 =====
+  const barrelControl = document.getElementById('barrelControl');
+  const barrelSlider  = document.getElementById('barrelSlider');
+  const barrelDegLbl  = document.getElementById('barrelDegLabel');
+
+  /**
+   * スライダー値（0〜359°）を barrelAngle（ラジアン）に変換してゲームに反映する
+   * 角度は「0°=右、90°=下、180°=左、270°=上」のキャンバス座標系
+   */
+  const onSliderInput = () => {
+    const deg = parseInt(barrelSlider.value, 10);
+    game.barrelAngle = (deg * Math.PI) / 180;
+    if (barrelDegLbl) barrelDegLbl.textContent = `${deg}°`;
+  };
+
+  if (barrelSlider) {
+    // スライダーの touch-action を none にしてスクロール競合を防ぐ
+    barrelSlider.style.touchAction = 'none';
+    barrelSlider.addEventListener('input', onSliderInput);
+    barrelSlider.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+  }
+
+  /**
+   * バレル装備状態に合わせてスライダーUIを表示/非表示する
+   * ゲームループ(rAF)に紐づけず、一定間隔でポーリングする
+   */
+  const updateBarrelUI = () => {
+    if (!barrelControl) return;
+    const hasBarrel = game.save.equippedItems.includes('barrel');
+    if (hasBarrel) {
+      barrelControl.classList.remove('hidden');
+      // ゲーム側の角度をスライダーに反映（外部から角度が変わった場合に同期）
+      const deg = Math.round(((game.barrelAngle * 180 / Math.PI) % 360 + 360) % 360);
+      if (barrelSlider) barrelSlider.value = deg;
+      if (barrelDegLbl) barrelDegLbl.textContent = `${deg}°`;
+    } else {
+      barrelControl.classList.add('hidden');
+    }
+  };
+  setInterval(updateBarrelUI, 300); // 0.3秒ごとに装備状態をチェック
 });

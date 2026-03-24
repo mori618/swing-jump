@@ -205,6 +205,15 @@ class Game {
     this.launchType = type;
     this.cam.followSpeed = 0.25;
 
+    // バレル装備時は Projectile 生成後に速度を強制上書き
+    // （jump_up 等他アイテムの速度補正より後に適用することで方向を正確に保つ）
+    if (type === 'human' && this.save.equippedItems.includes('barrel')) {
+      const rawSpeed = Math.abs(this.pendulum.angularVelocity) * this.pendulum.length;
+      const speed = Math.max(rawSpeed, 3) * 0.8; // 最低限の勢いを保証
+      p.vx = Math.cos(this.barrelAngle) * speed;
+      p.vy = Math.sin(this.barrelAngle) * speed;
+    }
+
     // type === 'human' の場合は飛行状態へ完全移行
     if (type === 'human') {
       this.state = STATE.FLYING;
