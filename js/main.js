@@ -33,9 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnOpenShop = document.getElementById('btnOpenShop');
   if (btnOpenShop) {
     btnOpenShop.addEventListener('click', () => {
-      game.paused = true; // ゲームを一時停止
+      // ショップを閉じた時にリザルトやHUDを最新のコイン等で更新するために game.ui.draw が呼ばれるが、ここでは特にコールバック処理は不要と想定
       shop.open(() => {
-        game.paused = false; // ショップを閉じたら再開
+        // 閉じた後の処理が必要であればここに書く
       });
     });
   }

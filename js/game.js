@@ -65,7 +65,6 @@ class Game {
 
     // --- 入力状態 ---
     this.isPushing = false;
-    this.paused = false; // ショップ閲覧時などの一時停止フラグ
 
     // --- アニメーションフレーム管理 ---
     this.lastTime = null;
@@ -234,8 +233,6 @@ class Game {
 
   // ===== 状態更新 =====
   _update(dt) {
-    if (this.paused) return;
-
     // 振り子の更新（humanが飛んでいない場合のみ）
     if (this.launchType !== 'human') {
       const oldRotPhase = Math.floor((this.pendulum.angle + Math.PI) / (Math.PI * 2));
