@@ -53,6 +53,10 @@ class Game {
     this.displayRotations = 0;
     this.lastVelSign = 0;
 
+    // --- バレルアイテム ---
+    this.barrelAngle = -Math.PI / 4; // デフォルト: 右上45度
+    this.barrelDragging = false;
+
     // --- カメラ ---
     this.cam = {
       x: 0,          // カメラX（ワールド座標系。スクロール量）
@@ -76,6 +80,9 @@ class Game {
     // --- ループ開始 ---
     this._loop = this._loop.bind(this);
     this.animId = requestAnimationFrame(this._loop);
+
+    // --- バレルのドラッグイベント登録 ---
+    this._bindBarrelEvents();
   }
 
   // ===== リサイズ処理 =====
@@ -112,6 +119,7 @@ class Game {
     this.launchType = '';
     this.displayRotations = 0;
     this.isPushing = false;
+    this.barrelDragging = false;
     this.character.legExtended = false;
     this.character.flyPose = false;
     this.pivotX = this.startPivotX;
@@ -172,6 +180,14 @@ class Game {
     } else if (type === 'human' && this.swingJumps === 1) {
       // 2回目のジャンプ
       this.swingJumps = 2;
+    }
+
+    // バレル装備時は発射方向と速度を上書き（ブランコの角速度を勢いとして使い 0.8 倍）
+    if (type === 'human' && this.save.equippedItems.includes('barrel')) {
+      const rawSpeed = Math.abs(this.pendulum.angularVelocity) * this.pendulum.length;
+      const speed = rawSpeed * 0.8;
+      vx = Math.cos(this.barrelAngle) * speed;
+      vy = Math.sin(this.barrelAngle) * speed;
     }
 
     const p = new Projectile(
@@ -423,7 +439,29 @@ class Game {
       }
     });
 
+    // ===== バレル描画（SWINGING 中・バレル装備時）=====
+    if (this.save.equippedItems.includes('barrel') && this.launchType !== 'human') {
+      this._drawBarrel(ctx);
+    }
+
     ctx.restore(); // カメラ変換終了
+
+    // ===== バレル角度 HUD ラベル =====
+    if (this.save.equippedItems.includes('barrel') && this.launchType !== 'human') {
+      const deg = Math.round(((this.barrelAngle * 180 / Math.PI) % 360 + 360) % 360);
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.beginPath();
+      ctx.roundRect(W / 2 - 68, 6, 136, 34, 8);
+      ctx.fill();
+      ctx.fillStyle = '#F97316';
+      ctx.font = 'bold 15px "Nunito", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = 'rgba(0,0,0,0.6)';
+      ctx.shadowBlur = 4;
+      ctx.fillText(`🛢️ ${deg}°`, W / 2, 28);
+      ctx.restore();
+    }
 
     this.ui.draw(ctx, W, H, this.state, this._lastDt);
   }
@@ -528,4 +566,129 @@ class Game {
   }
 
   // 距離マーカーや背景描画の個別メソッドは _draw 内に統合したため削除
+
+  // ===== スクリーン座標 → ワールド座標変換 =====
+  _screenToWorld(sx, sy) {
+    const W = this.canvas.width;
+    const H = this.canvas.height;
+    return {
+      x: (sx - W / 2) / this.cam.zoom + W / 2 + this.cam.x,
+      y: (sy - H / 2) / this.cam.zoom + H / 2 + this.cam.y,
+    };
+  }
+
+  // ===== バレルの円半径を返す =====
+  _getBarrelRadius() {
+    return this.pendulum.length * 1.2 + 35;
+  }
+
+  // ===== バレルのドラッグイベント登録 =====
+  _bindBarrelEvents() {
+    const getCanvasPos = (e) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const scaleX = this.canvas.width / rect.width;
+      const scaleY = this.canvas.height / rect.height;
+      const src = e.touches ? e.touches[0] : e;
+      return {
+        x: (src.clientX - rect.left) * scaleX,
+        y: (src.clientY - rect.top) * scaleY,
+      };
+    };
+
+    const onDown = (e) => {
+      if (!this.save.equippedItems.includes('barrel')) return;
+      if (this.launchType === 'human') return;
+      const cpos = getCanvasPos(e);
+      const wpos = this._screenToWorld(cpos.x, cpos.y);
+      const R = this._getBarrelRadius();
+      const bx = this.pivotX + Math.cos(this.barrelAngle) * R;
+      const by = this.pivotY + Math.sin(this.barrelAngle) * R;
+      if (Math.hypot(wpos.x - bx, wpos.y - by) < 55) {
+        this.barrelDragging = true;
+        e.preventDefault();
+      }
+    };
+
+    const onMove = (e) => {
+      if (!this.barrelDragging) return;
+      e.preventDefault();
+      const cpos = getCanvasPos(e);
+      const wpos = this._screenToWorld(cpos.x, cpos.y);
+      this.barrelAngle = Math.atan2(wpos.y - this.pivotY, wpos.x - this.pivotX);
+    };
+
+    const onUp = () => { this.barrelDragging = false; };
+
+    this.canvas.addEventListener('mousedown', onDown);
+    this.canvas.addEventListener('mousemove', onMove);
+    this.canvas.addEventListener('mouseup', onUp);
+    this.canvas.addEventListener('touchstart', onDown, { passive: false });
+    this.canvas.addEventListener('touchmove', onMove, { passive: false });
+    this.canvas.addEventListener('touchend', onUp);
+  }
+
+  // ===== バレル（砲台）描画 =====
+  _drawBarrel(ctx) {
+    const R = this._getBarrelRadius();
+    const bx = this.pivotX + Math.cos(this.barrelAngle) * R;
+    const by = this.pivotY + Math.sin(this.barrelAngle) * R;
+
+    // ガイド円（破線）
+    ctx.save();
+    ctx.strokeStyle = 'rgba(251, 146, 60, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    ctx.arc(this.pivotX, this.pivotY, R, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    // 砲台・砲身
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.rotate(this.barrelAngle);
+
+    // 砲台底部（灰色の円形台座）
+    ctx.fillStyle = '#334155';
+    ctx.beginPath();
+    ctx.arc(0, 0, 20, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 砲身（外方向 = 右向きに伸びる長方形）
+    ctx.fillStyle = this.barrelDragging ? '#FBBF24' : '#F97316';
+    ctx.beginPath();
+    ctx.roundRect(-6, -10, 52, 20, 4);
+    ctx.fill();
+
+    // 発射方向の矢印
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(46, 0);
+    ctx.lineTo(62, 0);
+    ctx.stroke();
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.moveTo(57, -7);
+    ctx.lineTo(68, 0);
+    ctx.lineTo(57, 7);
+    ctx.closePath();
+    ctx.fill();
+
+    // ドラッグ中のハイライトリング
+    if (this.barrelDragging) {
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.9)';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, 24, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }
 }
