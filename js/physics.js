@@ -108,7 +108,8 @@ class Pendulum {
         else impulse = -NORMAL;
 
         if (this.canReleaseBoost) {
-          const actualImpulse = impulse > 0 ? impulse * boostMultiplier : impulse;
+          let actualImpulse = impulse > 0 ? impulse * boostMultiplier : impulse;
+          actualImpulse *= 0.95; // 減速力をさらに5%落とす
           this.angularVelocity += actualImpulse;
           this.canReleaseBoost = false;
         }
@@ -135,7 +136,8 @@ class Pendulum {
         else impulse = NORMAL;
 
         if (this.canPushBoost) {
-          const actualImpulse = impulse < 0 ? impulse * boostMultiplier : impulse;
+          let actualImpulse = impulse < 0 ? impulse * boostMultiplier : impulse;
+          actualImpulse *= 0.95; // 減速力をさらに5%落とす
           this.angularVelocity += actualImpulse;
           this.canPushBoost = false;
         }
