@@ -10,7 +10,7 @@ const TEXTS = {
   HTML_LOADING_TEXT: 'Loading...',
   HTML_BTN_PUMP: 'こぐ！',
   HTML_BTN_LAUNCH: 'とぶ！',
-  HTML_WARNING: '⚠ 非常に危険ですので、実際のブランコでは絶対に真似をしないでください。',
+  HTML_WARNING: '! 非常に危険ですので、実際のブランコでは絶対に真似をしないでください。',
 
   // UI基本
   UI_POWER: 'POWER',
@@ -42,7 +42,7 @@ const TEXTS = {
 
   // 結果画面：靴とばしメッセージ
   RANK_S_BACKWARD: 'あれっ、逆向きだ！',
-  RANK_S_LEGEND: '空の果てまで到達！大気圏突破！🚀',
+  RANK_S_LEGEND: '空の果てまで到達！大気圏突破！',
   RANK_S_MASTER: '超人的な跳躍だ！',
   RANK_S_GOOD: 'お見事！いいキックだ！',
   RANK_S_POOR: 'もっと加速してから飛ぼう！',

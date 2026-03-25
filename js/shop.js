@@ -128,7 +128,7 @@ class ShopUI {
             <div class="item-name">${item.name}</div>
             <div class="item-desc">${item.desc}</div>
           </div>
-          <div class="item-price">${isOwned ? '✓ 所持' : `🪙 ${item.price}`}</div>
+          <div class="item-price">${isOwned ? '✓ 所持' : `C ${item.price}`}</div>
         </div>
         <div class="item-actions"></div>
       `;

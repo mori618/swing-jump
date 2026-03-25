@@ -472,7 +472,7 @@ class Game {
       ctx.textAlign = 'center';
       ctx.shadowColor = 'rgba(0,0,0,0.6)';
       ctx.shadowBlur = 4;
-      ctx.fillText(`🛢️ ${deg}°`, W / 2, 28);
+      ctx.fillText(`ANGLE: ${deg}°`, W / 2, 28);
       ctx.restore();
     }
 

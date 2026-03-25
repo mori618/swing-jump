@@ -13,7 +13,7 @@
 <body>
   <!-- ローディング画面 -->
   <div id="loading">
-    <h1>🎉 ブランコ！</h1>
+    <h1>ブランコ！</h1>
     <p>Loading...</p>
   </div>
 
@@ -23,27 +23,27 @@
     <canvas id="gameCanvas"></canvas>
 
     <!-- ショップ開くボタン -->
-    <button id="btnOpenShop" class="shop-open-btn">🛒 ショップ</button>
+    <button id="btnOpenShop" class="shop-open-btn">SHOP ショップ</button>
 
     <!-- 操作ボタンエリア（Fixed: 画面下部） -->
     <div id="buttonArea">
       <div id="buttonContainer">
         <!-- こぐボタン（押している間有効、タイミングよく） -->
         <button id="btnPump" class="game-btn pump-btn" type="button">
-          <span class="btn-icon">⚡</span>
+          <span class="btn-icon">PUMP</span>
           <span class="btn-label">こぐ！</span>
         </button>
 
         <!-- 飛んでいくボタン（人間） -->
         <button id="btnLaunchHuman" class="game-btn launch-human-btn" type="button">
-          <span class="btn-icon">🚀</span>
+          <span class="btn-icon">GO</span>
           <span class="btn-label">とぶ！</span>
         </button>
 
         <!-- バレル角度コントロール（バレル装備中のみ表示） -->
         <div id="barrelControl" class="barrel-control hidden">
           <div class="barrel-control-header">
-            <span class="barrel-icon">🛢️</span>
+            <span class="barrel-icon"></span>
             <span class="barrel-title">バレル角度</span>
             <span id="barrelDegLabel" class="barrel-deg">315°</span>
           </div>
@@ -52,7 +52,7 @@
           </div>
         </div>
         
-        <p class="warning-text">⚠ 非常に危険ですので、実際のブランコでは絶対に真似をしないでください。</p>
+        <p class="warning-text">! 非常に危険ですので、実際のブランコでは絶対に真似をしないでください。</p>
       </div>
     </div>  </div>
 
@@ -61,7 +61,7 @@
     <div class="shop-content">
       <div class="shop-header">
         <h2>ショップ</h2>
-        <div class="shop-coins">🪙 <span id="shopCoinCount">0</span></div>
+        <div class="shop-coins">COINS <span id="shopCoinCount">0</span></div>
         <button id="btnCloseShop" class="close-btn">×</button>
       </div>
       <div class="shop-equip-slots">
