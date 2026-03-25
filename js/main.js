@@ -163,4 +163,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
   setInterval(updateBarrelUI, 300); // 0.3秒ごとに装備状態をチェック
+
+  // ===== データ初期化処理 =====
+  const btnResetData = document.getElementById('btnResetData');
+  const confirmModal = document.getElementById('confirmModal');
+  const btnConfirmReset = document.getElementById('btnConfirmReset');
+  const btnCancelReset  = document.getElementById('btnCancelReset');
+
+  if (btnResetData && confirmModal) {
+    // ショップ内の「データ初期化」ボタン
+    btnResetData.addEventListener('click', () => {
+      confirmModal.classList.remove('hidden');
+    });
+
+    // 確認モーダルの「キャンセル」
+    btnCancelReset.addEventListener('click', () => {
+      confirmModal.classList.add('hidden');
+    });
+
+    // 確認モーダルの「初期化する」
+    btnConfirmReset.addEventListener('click', () => {
+      game.save.reset();
+      // 完全に初期化するため、ページをリロードする
+      window.location.reload();
+    });
+  }
 });

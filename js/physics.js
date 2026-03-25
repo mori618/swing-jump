@@ -223,9 +223,9 @@ class Projectile {
 
     // 「体重が重くなる」アイテム
     if (type === 'human' && this.equippedItems.includes('heavy_weight')) {
-      this.gravity *= 1.30; // 重力を増やして落ちやすくする
-      this.vy *= 0.75;      // 上方向の勢いを削ぐ
-      this.vx *= 1.45;      // 横方向の初速を大幅に引き上げる
+      this.gravity *= 1.60; // 重力を大幅に増やして「重さ」を強調
+      this.vy *= 0.40;      // 上方向の勢いをさらに削ぐ
+      this.vx *= 2.20;      // 横方向の初速をもっともっと引き上げる
     }
 
     // 「パラグライダー」のデメリット（装備しているだけで少し重くなる）
@@ -243,7 +243,11 @@ class Projectile {
 
     if (this.sliding) {
       // 「こおり」「アイスシューズ」「チョロ9」の滑り・転がり処理
-      const friction = this.equippedItems.includes('ice_shoes') ? 0.998 : 0.99;
+      let baseFriction = this.equippedItems.includes('ice_shoes') ? 0.998 : 0.99;
+      // 速度が速いほど摩擦を軽減（よく滑るように）する
+      // vxが大きくなるほど friction が 1.0 に近づく
+      const vFactor = Math.abs(this.vx) * 0.0002;
+      const friction = Math.min(0.9999, baseFriction + vFactor);
       this.vx *= friction;
       this.x += this.vx;
 

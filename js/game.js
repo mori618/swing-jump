@@ -33,21 +33,22 @@ class Game {
     // ブースト係数（参考コード: |ω| * 14 のボクセル変換）
     this.BOOST_FACTOR = 8;
 
+    // --- ゲームステート ---
+    this.state = STATE.SWINGING;
+
     // --- サイズ設定 ---
     this._resize();
 
     // --- 各モジュールの初期化 ---
-    this.pendulum = new Pendulum(180);
+    const ropeLen = Math.min(this.canvas.width, this.canvas.height) * 0.35;
+    this.pendulum = new Pendulum(ropeLen);
     this.character = new Character(this.ctx);
     this.save = new SaveManager();
     this.ui = new GameUI(this.save);
     this.ui.resetGuide();
 
-    this.startPivotX = this.pivotX;
     this.swingJumps = 0;
 
-    // --- ゲームステート ---
-    this.state = STATE.SWINGING;
     this.projectiles = [];
     this.launchType = '';
     this.displayRotations = 0;
@@ -91,8 +92,16 @@ class Game {
     this.canvas.height = window.innerHeight * (2 / 3);
 
     // 支点を画面中央やや上に下げる（参考コード準拠: 0.35）
-    this.pivotX = this.canvas.width / 2;
+    const newPivotX = this.canvas.width / 2;
     this.pivotY = this.canvas.height * 0.35;
+    
+    // 次回リセット時のための中心位置を更新
+    this.startPivotX = newPivotX;
+    
+    // 漕いでいる間（飛行開始前）、または初回初期化時であれば、現在の支点も即座に画面中央へ
+    if (this.state === STATE.SWINGING || this.pivotX === undefined) {
+      this.pivotX = newPivotX;
+    }
     
     // pendulum が存在する場合はロープ長も更新
     const ropeLen = Math.min(this.canvas.width, this.canvas.height) * 0.35;
@@ -132,7 +141,6 @@ class Game {
     this.cam.followSpeed = 0.08;
     this.ui.hideResult();
     this.ui.setDistance(0);
-    this.ui.resetGuide();
   }
 
   // ===== こぐボタンのアクション =====
@@ -288,7 +296,9 @@ class Game {
     if (this.state === STATE.FLYING || this.state === STATE.RESULT) {
       let primaryTarget = null;
       this.projectiles.forEach(p => {
-        if (!p.landed) {
+        // まだ着地していないか、滑っている最中か、結果判定待ちであれば更新を行う
+        const isMoving = !p.landed || p.sliding || p.needResultTrigger;
+        if (isMoving) {
           p.update(this.isPushing);
           if (p.checkLanding(this.groundY, this.pivotX)) {
             if (p.type === 'human' || this.launchType === 'shoe') {

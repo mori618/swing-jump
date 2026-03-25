@@ -52,5 +52,12 @@ const TEXTS = {
   RESULT_EARNED_COINS: '獲得コイン',
   RESULT_BONUS_TEXT: (base, bonus) => `(基礎 +${base}  新記録ボーナス +${bonus})`,
   RESULT_TOTAL_COINS: (coins) => `合計: ${coins} コイン`,
-  RESULT_RETRY: 'タップしてもう一度'
+  RESULT_RETRY: 'タップしてもう一度',
+
+  // データ初期化
+  RESET_DATA_BTN: 'データ初期化',
+  RESET_CONFIRM_TITLE: 'データを初期化しますか？',
+  RESET_CONFIRM_MSG: 'これまでの記録、所持コイン、アイテムがすべて消去されます。この操作は取り消せません。',
+  RESET_CONFIRM_OK: '初期化する',
+  RESET_CONFIRM_CANCEL: 'キャンセル'
 };

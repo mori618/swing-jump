@@ -70,6 +70,9 @@
       <div id="shopItemList" class="shop-item-list">
         <!-- アイテムが動的に追加される -->
       </div>
+      <div class="shop-footer">
+        <button id="btnResetData" class="reset-btn">データ初期化</button>
+      </div>
     </div>
   </div>
 
@@ -93,6 +96,18 @@
       
       <div id="totalCoinsText" class="total-coins">合計: 0 コイン</div>
       <p class="retry-guide">タップしてもう一度</p>
+    </div>
+  </div>
+
+  <!-- データ初期化確認モーダル -->
+  <div id="confirmModal" class="hidden">
+    <div class="confirm-card">
+      <h2 id="confirmTitle">データを初期化しますか？</h2>
+      <p id="confirmMsg">これまでの記録、所持コイン、アイテムがすべて消去されます。この操作は取り消せません。</p>
+      <div class="confirm-actions">
+        <button id="btnConfirmReset" class="btn-danger">初期化する</button>
+        <button id="btnCancelReset" class="btn-secondary">キャンセル</button>
+      </div>
     </div>
   </div>
 

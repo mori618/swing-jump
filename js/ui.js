@@ -267,15 +267,24 @@ class GameUI {
     ctx.save();
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.beginPath();
-    ctx.roundRect(W / 2 - 70, H - 80, 140, 50, 10);
+    // 2行表示に戻し、高さを少し広げて上下に余裕を持たせる
+    ctx.roundRect(W / 2 - 80, H - 90, 160, 60, 12);
     ctx.fill();
+
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 4;
+
+    // 上段：ラベル（水色、位置を少し上に）
     ctx.fillStyle = '#00E5FF';
     ctx.font = 'bold 11px "Nunito", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(TEXTS.UI_FLIGHT_DIST, W / 2, H - 58);
+    ctx.fillText(TEXTS.UI_FLIGHT_DIST, W / 2, H - 68);
+
+    // 下段：数値（白、フォントを少し大きく、位置を少し下に）
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 22px "Nunito", sans-serif';
+    ctx.font = 'bold 24px "Nunito", sans-serif';
     ctx.fillText(`${this.currentDistance.toFixed(1)} ${TEXTS.UI_M}`, W / 2, H - 40);
+    
     ctx.restore();
   }
 
@@ -391,14 +400,15 @@ class GameUI {
     ctx.globalAlpha = alpha * 0.7;
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.beginPath();
-    ctx.roundRect(W / 2 - 110, H / 2 + 60, 220, 50, 10);
+    // 左上のBEST距離HUD(y:44, h:38)の下に配置
+    ctx.roundRect(12, 90, 200, 46, 10);
     ctx.fill();
     ctx.globalAlpha = alpha;
     ctx.fillStyle = 'white';
-    ctx.font = '13px "Nunito", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(TEXTS.GUIDE_LINE1, W / 2, H / 2 + 82);
-    ctx.fillText(TEXTS.GUIDE_LINE2, W / 2, H / 2 + 100);
+    ctx.font = 'bold 13px "Nunito", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(TEXTS.GUIDE_LINE1, 22, 110);
+    ctx.fillText(TEXTS.GUIDE_LINE2, 22, 128);
     ctx.restore();
   }
 

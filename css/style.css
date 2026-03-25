@@ -91,6 +91,7 @@ html, body {
     box-shadow 0.08s ease,
     filter 0.08s ease;
   -webkit-appearance: none;
+  appearance: none;
   outline: none;
   position: relative;
   overflow: hidden;
@@ -293,6 +294,11 @@ html, body {
   border-radius: 12px;
 }
 
+#shopCoinCount {
+  color: white;
+  margin-left: 8px;
+}
+
 .close-btn {
   background: transparent;
   border: none;
@@ -318,6 +324,13 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  /* スクロールバーを非表示にする */
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* IE/Edge */
+}
+
+.shop-item-list::-webkit-scrollbar {
+  display: none;                  /* Chrome, Safari, Opera */
 }
 
 .shop-item {
@@ -399,6 +412,32 @@ html, body {
   background: rgba(255,255,255,0.1);
   color: rgba(255,255,255,0.3);
   pointer-events: none;
+}
+  
+/* ===== ショップフッター（初期化ボタンなど） ===== */
+.shop-footer {
+  padding: 16px 20px;
+  background: rgba(0,0,0,0.2);
+  border-top: 1px solid rgba(255,255,255,0.05);
+  display: flex;
+  justify-content: center;
+}
+
+.reset-btn {
+  background: transparent;
+  color: #ff5252;
+  border: 1px solid rgba(255, 82, 82, 0.4);
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.reset-btn:active {
+  background: rgba(255, 82, 82, 0.1);
+  transform: scale(0.95);
 }
 /* ===== 結果表示モーダル ===== */
 #resultModal {
@@ -591,4 +630,82 @@ html, body {
   border: 3px solid #F97316;
   cursor: pointer;
   box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+/* ===== 確認モーダル ===== */
+#confirmModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(8px);
+  padding: 24px;
+  transition: opacity 0.3s ease;
+}
+
+#confirmModal.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.confirm-card {
+  width: 100%;
+  max-width: 340px;
+  background: #1e1e30;
+  border-radius: 28px;
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.1);
+  animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.confirm-card h2 {
+  color: #ff5252;
+  margin: 0 0 16px;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.confirm-card p {
+  color: rgba(255,255,255,0.7);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 0 32px;
+}
+
+.confirm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-danger {
+  background: #ff5252;
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 16px;
+  font-weight: 900;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: rgba(255,255,255,0.1);
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.confirm-actions button:active {
+  transform: scale(0.96);
+  filter: brightness(0.9);
 }
