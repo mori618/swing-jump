@@ -64,6 +64,12 @@ const SHOP_ITEMS = [
     name: 'チョロ9',
     desc: 'マイナス（左）方向へ飛んで着地した時、蓄積されたパワーで倍の勢いになって大きく右へ転がっていく',
     price: 600
+  },
+  {
+    id: 'barrel',
+    name: 'バレル',
+    desc: '漕ぎ出す前にブランコ周りの砲台をドラッグして発射角度を決められる。「とぶ！」でタイミングに関わらずその方向へ射出される。ただし勢いは 0.8 倍になる',
+    price: 450
   }
 ];
 
@@ -122,7 +128,7 @@ class ShopUI {
             <div class="item-name">${item.name}</div>
             <div class="item-desc">${item.desc}</div>
           </div>
-          <div class="item-price">${isOwned ? '✓ 所持' : `🪙 ${item.price}`}</div>
+          <div class="item-price">${isOwned ? '✓ 所持' : `C ${item.price}`}</div>
         </div>
         <div class="item-actions"></div>
       `;

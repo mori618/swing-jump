@@ -73,18 +73,70 @@ class GameUI {
     // コインHUDのアニメーション開始
     this.coinAnimTimer = 2.5; // 2.5秒かけて増やす
 
-    // ショップボタンを表示
-    const btnOpenShop = document.getElementById('btnOpenShop');
-    if (btnOpenShop) btnOpenShop.classList.remove('hidden');
+    // --- HTMLモーダルの更新 ---
+    const modal = document.getElementById('resultModal');
+    const titleEl = document.getElementById('resultTitle');
+    const distEl = document.getElementById('resultDistValue');
+    const rankEl = document.getElementById('resultRank');
+    const earnedEl = document.getElementById('earnedCoinValue');
+    const bonusEl = document.getElementById('bonusText');
+    const totalEl = document.getElementById('totalCoinsText');
+
+    if (modal) {
+      // ランクメッセージの反映
+      let rankMsg;
+      let titleTxt = TEXTS.RESULT_TITLE_HUMAN;
+      if (launchType === 'human') {
+        if (dist < 0)        rankMsg = TEXTS.RANK_H_BACKWARD;
+        else if (dist > 300) rankMsg = TEXTS.RANK_H_LEGEND;
+        else if (dist > 150) rankMsg = TEXTS.RANK_H_MASTER;
+        else if (dist > 60)  rankMsg = TEXTS.RANK_H_GOOD;
+        else                 rankMsg = TEXTS.RANK_H_POOR;
+      } else {
+        titleTxt = TEXTS.RESULT_TITLE_SHOE;
+        if (dist < 0)        rankMsg = TEXTS.RANK_S_BACKWARD;
+        else if (dist > 300) rankMsg = TEXTS.RANK_S_LEGEND;
+        else if (dist > 150) rankMsg = TEXTS.RANK_S_MASTER;
+        else if (dist > 60)  rankMsg = TEXTS.RANK_S_GOOD;
+        else                 rankMsg = TEXTS.RANK_S_POOR;
+      }
+
+      if (titleEl) titleEl.textContent = titleTxt;
+      if (distEl) distEl.textContent = dist.toFixed(1);
+      if (rankEl) rankEl.textContent = this.isNewRecord ? TEXTS.RESULT_NEW_RECORD + rankMsg : rankMsg;
+      if (rankEl) rankEl.style.color = this.isNewRecord ? '#FF6D00' : 'rgba(255,255,255,0.75)';
+
+      // コイン
+      if (earnedEl) {
+        const signText = this.earnedCoins > 0 ? '+' : '';
+        earnedEl.textContent = `${signText}${this.earnedCoins}`;
+      }
+
+      if (bonusEl) {
+        if (this.bonusApplied) {
+          const baseCoins = calcCoins(dist);
+          bonusEl.textContent = TEXTS.RESULT_BONUS_TEXT(baseCoins, 20);
+          bonusEl.classList.remove('hidden');
+        } else {
+          bonusEl.classList.add('hidden');
+        }
+      }
+
+      if (totalEl) {
+        totalEl.textContent = TEXTS.RESULT_TOTAL_COINS(this.save.coins.toLocaleString());
+      }
+
+      modal.classList.remove('hidden');
+    }
   }
 
   /** 結果を非表示にする */
   hideResult() {
     this.showResult = false;
 
-    // ショップボタンを非表示
-    const btnOpenShop = document.getElementById('btnOpenShop');
-    if (btnOpenShop) btnOpenShop.classList.add('hidden');
+    // モーダルを非表示
+    const modal = document.getElementById('resultModal');
+    if (modal) modal.classList.add('hidden');
   }
 
   /**
@@ -124,10 +176,12 @@ class GameUI {
       this._drawFlyingDistance(ctx, canvasWidth, canvasHeight);
     }
 
-    // ===== 結果画面 =====
+    // ===== 結果画面（HTML移行済みのため描画不要） =====
+    /*
     if (this.showResult) {
       this._drawResultScreen(ctx, canvasWidth, canvasHeight);
     }
+    */
 
     // ===== 操作ガイド =====
     if (state === 'SWINGING' && this.guideTimer > 0) {
@@ -213,15 +267,24 @@ class GameUI {
     ctx.save();
     ctx.fillStyle = 'rgba(0,0,0,0.4)';
     ctx.beginPath();
-    ctx.roundRect(W / 2 - 70, H - 80, 140, 50, 10);
+    // 2行表示に戻し、高さを少し広げて上下に余裕を持たせる
+    ctx.roundRect(W / 2 - 80, H - 90, 160, 60, 12);
     ctx.fill();
+
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 4;
+
+    // 上段：ラベル（水色、位置を少し上に）
     ctx.fillStyle = '#00E5FF';
     ctx.font = 'bold 11px "Nunito", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(TEXTS.UI_FLIGHT_DIST, W / 2, H - 58);
+    ctx.fillText(TEXTS.UI_FLIGHT_DIST, W / 2, H - 68);
+
+    // 下段：数値（白、フォントを少し大きく、位置を少し下に）
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 22px "Nunito", sans-serif';
+    ctx.font = 'bold 24px "Nunito", sans-serif';
     ctx.fillText(`${this.currentDistance.toFixed(1)} ${TEXTS.UI_M}`, W / 2, H - 40);
+    
     ctx.restore();
   }
 
@@ -337,14 +400,15 @@ class GameUI {
     ctx.globalAlpha = alpha * 0.7;
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.beginPath();
-    ctx.roundRect(W / 2 - 110, H / 2 + 60, 220, 50, 10);
+    // 左上のBEST距離HUD(y:44, h:38)の下に配置
+    ctx.roundRect(12, 90, 200, 46, 10);
     ctx.fill();
     ctx.globalAlpha = alpha;
     ctx.fillStyle = 'white';
-    ctx.font = '13px "Nunito", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(TEXTS.GUIDE_LINE1, W / 2, H / 2 + 82);
-    ctx.fillText(TEXTS.GUIDE_LINE2, W / 2, H / 2 + 100);
+    ctx.font = 'bold 13px "Nunito", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(TEXTS.GUIDE_LINE1, 22, 110);
+    ctx.fillText(TEXTS.GUIDE_LINE2, 22, 128);
     ctx.restore();
   }
 

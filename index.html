@@ -13,7 +13,7 @@
 <body>
   <!-- ローディング画面 -->
   <div id="loading">
-    <h1>🎉 ブランコ！</h1>
+    <h1>ブランコ！</h1>
     <p>Loading...</p>
   </div>
 
@@ -22,25 +22,37 @@
     <!-- メインキャンバス -->
     <canvas id="gameCanvas"></canvas>
 
-    <!-- ショップ開くボタン（結果画面用） -->
-    <button id="btnOpenShop" class="shop-open-btn hidden">🛒 ショップ</button>
+    <!-- ショップ開くボタン -->
+    <button id="btnOpenShop" class="shop-open-btn">SHOP ショップ</button>
 
     <!-- 操作ボタンエリア（Fixed: 画面下部） -->
     <div id="buttonArea">
       <div id="buttonContainer">
         <!-- こぐボタン（押している間有効、タイミングよく） -->
         <button id="btnPump" class="game-btn pump-btn" type="button">
-          <span class="btn-icon">⚡</span>
+          <span class="btn-icon">PUMP</span>
           <span class="btn-label">こぐ！</span>
         </button>
 
         <!-- 飛んでいくボタン（人間） -->
         <button id="btnLaunchHuman" class="game-btn launch-human-btn" type="button">
-          <span class="btn-icon">🚀</span>
+          <span class="btn-icon">GO</span>
           <span class="btn-label">とぶ！</span>
         </button>
+
+        <!-- バレル角度コントロール（バレル装備中のみ表示） -->
+        <div id="barrelControl" class="barrel-control hidden">
+          <div class="barrel-control-header">
+            <span class="barrel-icon"></span>
+            <span class="barrel-title">バレル角度</span>
+            <span id="barrelDegLabel" class="barrel-deg">315°</span>
+          </div>
+          <div class="barrel-slider-wrap">
+            <input type="range" id="barrelSlider" class="barrel-slider" min="0" max="359" value="315">
+          </div>
+        </div>
         
-        <p class="warning-text">⚠ 非常に危険ですので、実際のブランコでは絶対に真似をしないでください。</p>
+        <p class="warning-text">! 非常に危険ですので、実際のブランコでは絶対に真似をしないでください。</p>
       </div>
     </div>  </div>
 
@@ -49,7 +61,7 @@
     <div class="shop-content">
       <div class="shop-header">
         <h2>ショップ</h2>
-        <div class="shop-coins">🪙 <span id="shopCoinCount">0</span></div>
+        <div class="shop-coins">COINS <span id="shopCoinCount">0</span></div>
         <button id="btnCloseShop" class="close-btn">×</button>
       </div>
       <div class="shop-equip-slots">
@@ -57,6 +69,44 @@
       </div>
       <div id="shopItemList" class="shop-item-list">
         <!-- アイテムが動的に追加される -->
+      </div>
+      <div class="shop-footer">
+        <button id="btnResetData" class="reset-btn">データ初期化</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 結果表示画面モーダル -->
+  <div id="resultModal" class="hidden">
+    <div class="result-card">
+      <h2 id="resultTitle">着地成功！</h2>
+      <div class="result-distance">
+        <span id="resultDistValue">0.0</span>
+        <span class="unit">メートル</span>
+      </div>
+      <p id="resultRank" class="result-rank">もっとスイングを極めて高く飛ぼう！</p>
+      
+      <div class="result-divider"></div>
+      
+      <div class="result-coins">
+        <div class="result-label">獲得コイン</div>
+        <div id="earnedCoinValue" class="earned-coins">+0</div>
+        <div id="bonusText" class="bonus-text hidden">（飛距離ボーナス +20）</div>
+      </div>
+      
+      <div id="totalCoinsText" class="total-coins">合計: 0 コイン</div>
+      <p class="retry-guide">タップしてもう一度</p>
+    </div>
+  </div>
+
+  <!-- データ初期化確認モーダル -->
+  <div id="confirmModal" class="hidden">
+    <div class="confirm-card">
+      <h2 id="confirmTitle">データを初期化しますか？</h2>
+      <p id="confirmMsg">これまでの記録、所持コイン、アイテムがすべて消去されます。この操作は取り消せません。</p>
+      <div class="confirm-actions">
+        <button id="btnConfirmReset" class="btn-danger">初期化する</button>
+        <button id="btnCancelReset" class="btn-secondary">キャンセル</button>
       </div>
     </div>
   </div>
