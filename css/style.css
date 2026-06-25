@@ -214,6 +214,34 @@ html, body {
   margin: 0;
 }
 
+/* ===== ミュートボタン ===== */
+.mute-btn {
+  position: absolute;
+  top: 36px;
+  right: 16px;
+  width: 42px;
+  height: 42px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+  transition: transform 0.1s, border-color 0.3s, background 0.3s;
+}
+.mute-btn:active {
+  transform: scale(0.9);
+}
+.mute-btn.muted {
+  border-color: #ff5252;
+  background: rgba(255, 82, 82, 0.2);
+}
+
 /* ===== ショップ開くボタン ===== */
 .shop-open-btn {
   position: absolute;
@@ -708,4 +736,27 @@ html, body {
 .confirm-actions button:active {
   transform: scale(0.96);
   filter: brightness(0.9);
+}
+
+/* ===== 紙吹雪（Confetti）エフェクト ===== */
+.confetti {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  opacity: 0.8;
+  z-index: 301;
+  pointer-events: none;
+  border-radius: 2px;
+  animation: confettiFall 2.5s ease-out forwards;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
 }
