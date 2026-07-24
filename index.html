@@ -8,6 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#1a1a2e" />
   <title>ブランコ 飛距離チャレンジ</title>
+  <meta name="description" content="物理挙動を使ったブランコ飛距離チャレンジゲーム。タイミングよくブランコを漕いで大空高く飛び出し、飛距離を競おう！コインを集めてショップでユニークな強化アイテムを購入可能！" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -18,9 +19,12 @@
   </div>
 
   <!-- ゲームコンテナ -->
-  <div id="gameContainer">
+  <main id="gameContainer">
     <!-- メインキャンバス -->
     <canvas id="gameCanvas"></canvas>
+
+    <!-- ミュートボタン -->
+    <button id="btnMute" class="mute-btn">🔊</button>
 
     <!-- ショップ開くボタン -->
     <button id="btnOpenShop" class="shop-open-btn">SHOP ショップ</button>
@@ -54,7 +58,7 @@
         
         <p class="warning-text">! 非常に危険ですので、実際のブランコでは絶対に真似をしないでください。</p>
       </div>
-    </div>  </div>
+    </div>  </main>
 
   <!-- ショップ画面モーダル -->
   <div id="shopModal" class="hidden">
@@ -112,6 +116,7 @@
   </div>
 
   <!-- JSファイル読み込み（依存順） -->
+  <script src="js/audio.js"></script>
   <script src="js/texts.js"></script>
   <script src="js/save.js"></script>
   <script src="js/shop.js"></script>

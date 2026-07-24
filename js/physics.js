@@ -256,6 +256,11 @@ class Projectile {
         this.rotation += this.vx * 0.05;
       }
 
+      // 滑り中のSEトリガー（ランダムに細かく鳴らす）
+      if (Math.abs(this.vx) > 0.5 && Math.random() < 0.25) {
+        if (window.soundEngine) window.soundEngine.playSlide(0.12);
+      }
+
       if (Math.abs(this.vx) < 0.1) {
         this.vx = 0;
         this.sliding = false;
@@ -325,6 +330,8 @@ class Projectile {
           this.maxAltitude = -this.y; // 新しい頂点計測用
           // 回転も再生成
           this.vrot += (Math.random() - 0.5) * 0.2;
+          
+          if (window.soundEngine) window.soundEngine.playBounce();
           return false;
         }
       }
@@ -344,6 +351,9 @@ class Projectile {
 
         this.sliding = true;
         this.needResultTrigger = true;
+        
+        // チョロダッシュ開始（爆発風の打ち上げ音を流用）
+        if (window.soundEngine) window.soundEngine.playLaunch(false);
         return false; // ダッシュ中はまだリザルトに行かない
       }
 
@@ -356,6 +366,8 @@ class Projectile {
 
         this.sliding = true;
         this.needResultTrigger = true;
+        
+        if (window.soundEngine) window.soundEngine.playSlide(0.3);
         return false; // まだゲームは終わらない
       }
 

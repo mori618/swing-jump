@@ -71,6 +71,9 @@ class Game {
     // --- 入力状態 ---
     this.isPushing = false;
 
+    // --- パーティクルシステム ---
+    this.particles = [];
+
     // --- アニメーションフレーム管理 ---
     this.lastTime = null;
     this.animId = null;
@@ -125,6 +128,7 @@ class Game {
     this.pendulum = new Pendulum(ropeLen);
     this.state = STATE.SWINGING;
     this.projectiles = [];
+    this.particles = []; // 粒子エフェクトのリセット
     this.launchType = '';
     this.displayRotations = 0;
     this.isPushing = false;
@@ -143,6 +147,20 @@ class Game {
     this.ui.setDistance(0);
   }
 
+  /** パーティクルエフェクトの追加 */
+  addParticle(x, y, vx, vy, color, size, decay, type = 'normal', text = '') {
+    this.particles.push({
+      x, y,
+      vx, vy,
+      color,
+      size,
+      alpha: 1.0,
+      decay,
+      type,
+      text
+    });
+  }
+
   // ===== こぐボタンのアクション =====
   startPump() {
     if (this.state === STATE.RESULT) return;
@@ -152,6 +170,11 @@ class Game {
       this.ui.guideTimer = 0;
       const boostMultiplier = this.save.equippedItems.includes('pump_up') ? 2.5 : 1.0;
       this.pendulum.applyBoost(true, boostMultiplier);
+      
+      // 漕ぎ効果音
+      if (window.soundEngine) {
+        window.soundEngine.playPump();
+      }
     }
   }
 
@@ -220,6 +243,31 @@ class Game {
       const speed = Math.max(naturalSpeed, 8) * 0.8; // 最低限の勢いを保証
       p.vx = Math.cos(this.barrelAngle) * speed;
       p.vy = Math.sin(this.barrelAngle) * speed;
+
+      // 大砲（バレル）の発射煙・火花エフェクト
+      const R = this._getBarrelRadius();
+      const bx = this.pivotX + Math.cos(this.barrelAngle) * R;
+      const by = this.pivotY + Math.sin(this.barrelAngle) * R;
+      for (let i = 0; i < 20; i++) {
+        const a = this.barrelAngle + (Math.random() - 0.5) * 0.5;
+        const spd = 2 + Math.random() * 6;
+        // 火花
+        this.addParticle(bx, by, Math.cos(a) * spd, Math.sin(a) * spd, '#ff9800', 3 + Math.random() * 3, 0.04);
+        // 黒煙
+        this.addParticle(bx, by, Math.cos(a) * (spd * 0.5), Math.sin(a) * (spd * 0.5), 'rgba(100,100,110,0.6)', 10 + Math.random() * 8, 0.02);
+      }
+    } else if (type === 'human') {
+      // 通常の人間ジャンプ時のエフェクト
+      for (let i = 0; i < 15; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const spd = 1 + Math.random() * 3;
+        this.addParticle(p.x, p.y, Math.cos(a) * spd, Math.sin(a) * spd, '#ffffff', 2 + Math.random() * 3, 0.03);
+      }
+    }
+
+    // 発射効果音
+    if (window.soundEngine) {
+      window.soundEngine.playLaunch(type === 'shoe');
     }
 
     // type === 'human' の場合は飛行状態へ完全移行
@@ -249,6 +297,18 @@ class Game {
       jumpPower = -14;
     }
     human.vy = jumpPower;
+
+    // ２段ジャンプ効果音
+    if (window.soundEngine) {
+      window.soundEngine.playDoubleJump();
+    }
+
+    // 足元から広がるドーナツ状の白い煙リング
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      const spd = 2.0;
+      this.addParticle(human.x, human.y + 15, Math.cos(a) * spd, Math.sin(a) * spd, 'rgba(255,255,255,0.7)', 5, 0.04);
+    }
   }
 
   // ===== メインゲームループ =====
@@ -266,6 +326,20 @@ class Game {
 
   // ===== 状態更新 =====
   _update(dt) {
+    // --- パーティクルの更新 ---
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.alpha -= p.decay;
+      if (p.type === 'text') {
+        p.vy *= 0.98; // テキストは徐々に減速して上昇
+      }
+      if (p.alpha <= 0) {
+        this.particles.splice(i, 1);
+      }
+    }
+
     // 振り子の更新（humanが飛んでいない場合のみ）
     if (this.launchType !== 'human') {
       const oldRotPhase = Math.floor((this.pendulum.angle + Math.PI) / (Math.PI * 2));
@@ -300,9 +374,49 @@ class Game {
         const isMoving = !p.landed || p.sliding || p.needResultTrigger;
         if (isMoving) {
           p.update(this.isPushing);
+
+          // 飛行中（空中）のエフェクト
+          if (!p.landed) {
+            // パラグライダー時の気流パーティクル
+            if (p.type === 'human' && p.equippedItems.includes('paraglider') && this.isPushing) {
+              if (Math.random() < 0.4) {
+                // キャラクターの後ろから左に流れる白い線
+                this.addParticle(p.x - 20, p.y + (Math.random() - 0.5) * 30, -p.vx * 0.3, (Math.random() - 0.5) * 1.5, 'rgba(255,255,255,0.45)', 2, 0.04);
+              }
+            }
+            // 通常飛行時のスピード線（速度が十分に速い場合）
+            if (p.vx > 10 && Math.random() < 0.25) {
+              this.addParticle(p.x - 40, p.y + (Math.random() - 0.5) * 60, -p.vx * 0.2, 0, 'rgba(255,255,255,0.25)', 1.5, 0.03);
+            }
+          }
+
+          // 地面滑走中の砂煙・火花エフェクト
+          if (p.sliding) {
+            if (Math.random() < 0.45) {
+              // 砂煙
+              this.addParticle(p.x, this.groundY, -p.vx * 0.2 + (Math.random() - 0.5) * 2, -1 - Math.random() * 2, '#cbd5e1', 3 + Math.random() * 4, 0.04);
+            }
+            if (p.equippedItems.includes('choro_9') && Math.random() < 0.3) {
+              // チョロ9のダッシュ火花
+              this.addParticle(p.x, this.groundY, -p.vx * 0.15 + (Math.random() - 0.5) * 3, -2 - Math.random() * 3, '#ffd700', 2 + Math.random() * 2, 0.05);
+            }
+          }
+
           if (p.checkLanding(this.groundY, this.pivotX)) {
             if (p.type === 'human' || this.launchType === 'shoe') {
               this.state = STATE.RESULT;
+
+              // 着地時の成功/気絶SEトリガー
+              const isCrash = (p.equippedItems.includes('ice_shoes') && p.vy > 16) || p.dist < 0;
+              if (window.soundEngine) {
+                if (isCrash) {
+                  window.soundEngine.playCrash();
+                  setTimeout(() => window.soundEngine.playFail(), 500);
+                } else {
+                  window.soundEngine.playSuccess();
+                }
+              }
+
               this.ui.showResultScreen(p.dist, p.type);
             }
           }
@@ -339,27 +453,75 @@ class Game {
     const W = this.canvas.width;
     const H = this.canvas.height;
 
-    // ===== 空背景（グラデーション） =====
+    // ===== 1. 空背景（美しい夕暮れのグラデーション） =====
     const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
-    skyGrad.addColorStop(0, '#bfdbfe'); // bg-blue-200
-    skyGrad.addColorStop(1, '#eff6ff'); // bg-blue-50
+    skyGrad.addColorStop(0, '#a5f3fc'); // シアン
+    skyGrad.addColorStop(0.5, '#bae6fd'); // 明るい青
+    skyGrad.addColorStop(1, '#ffedd5'); // 地平線近くの暖かなオレンジ
     ctx.fillStyle = skyGrad;
     ctx.fillRect(0, 0, W, H);
 
-    // ===== カメラ変換（ズーム＋スクロール） =====
+    // ===== 2. カメラ変換（パララックス背景用に個別のスクロール率で描画） =====
+    
+    // 【遠景レイヤー】（スクロール率 0.05）
+    ctx.save();
+    ctx.translate(W / 2, H / 2);
+    ctx.scale(this.cam.zoom, this.cam.zoom);
+    ctx.translate(-W / 2 - this.cam.x * 0.05, -H / 2 - this.cam.y * 0.05);
+
+    // 太陽を描画（高い位置、スクロールほぼなし）
+    ctx.fillStyle = '#fef08a';
+    ctx.beginPath();
+    ctx.arc(W - 200, 120, 45, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(254, 240, 138, 0.2)';
+    ctx.beginPath();
+    ctx.arc(W - 200, 120, 60, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 遠くの山々
+    ctx.fillStyle = '#7dd3fc'; // 薄いシアンブルー
+    ctx.beginPath();
+    for (let i = -10; i < 40; i++) {
+      const mx = i * 500;
+      ctx.lineTo(mx, H + 100);
+      ctx.lineTo(mx + 250, H - 180 + Math.sin(i) * 50);
+      ctx.lineTo(mx + 500, H + 100);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // 【中景レイヤー】（スクロール率 0.25）
+    ctx.save();
+    ctx.translate(W / 2, H / 2);
+    ctx.scale(this.cam.zoom, this.cam.zoom);
+    ctx.translate(-W / 2 - this.cam.x * 0.25, -H / 2 - this.cam.y * 0.25);
+
+    // 中景のビルや街並みのシルエット
+    ctx.fillStyle = '#38bdf8'; // 少し濃いめの青
+    for (let i = -10; i < 40; i++) {
+      const bx = i * 220 + Math.sin(i) * 30;
+      const bw = 90 + Math.cos(i) * 30;
+      const bh = 110 + Math.abs(Math.sin(i * 2.5)) * 90;
+      ctx.fillRect(bx, H - bh - 40, bw, bh + 100);
+    }
+    ctx.restore();
+
+    // 【メインゲームレイヤー（近景）】（スクロール率 1.0）
     ctx.save();
     ctx.translate(W / 2, H / 2);
     ctx.scale(this.cam.zoom, this.cam.zoom);
     ctx.translate(-W / 2 - this.cam.x, -H / 2 - this.cam.y);
 
-    // ===== 背景装飾（雲のような半透明円形） =====
-    ctx.fillStyle = "rgba(255,255,255,0.7)";
+    // 雲（近景、ゆっくりと流れる）
+    ctx.fillStyle = "rgba(255,255,255,0.75)";
     for(let i = -15; i < 50; i++) {
         ctx.beginPath();
-        ctx.arc(i * 900 + 400, -600 + Math.sin(i) * 250, 300, 0, Math.PI * 2);
+        ctx.arc(i * 900 + 400, -600 + Math.sin(i) * 200, 240, 0, Math.PI * 2);
         ctx.fill();
     }
-    // ===== タイミング円不要のため削除 =====
+
     // ===== 地面 =====
     ctx.fillStyle = '#94a3b8'; 
     ctx.fillRect(this.pivotX - 200000, this.groundY, 400000, 5000);
@@ -425,10 +587,10 @@ class Game {
       if (p.type === 'human') {
         if (!p.landed) {
           const isParagliding = p.equippedItems.includes('paraglider') && this.isPushing;
-          this.character.drawFlying(p.x, p.y, p.vx, p.vy, p.rotation, false, this.pendulum.length, isParagliding);
+          this.character.drawFlying(p.x, p.y, p.vx, p.vy, p.rotation, false, this.pendulum.length, isParagliding, 'flying');
           
           if (this.swingJumps === 1) {
-            // ブランコごと飛んでいるエフェクト（簡易描画）
+            // ブランコごと飛んでいるエフェクト
             ctx.save();
             ctx.translate(p.x, p.y);
             ctx.rotate(p.rotation);
@@ -447,7 +609,9 @@ class Game {
             ctx.restore();
           }
         } else {
-          this.character.drawLanded(p.x, p.y, p.rotation, this.pendulum.length);
+          // 失敗（気絶）か成功かを判定して描画
+          const isCrash = (p.equippedItems.includes('ice_shoes') && p.vy > 16) || p.dist < 0;
+          this.character.drawLanded(p.x, p.y, p.rotation, this.pendulum.length, isCrash);
           if (this.launchType === 'human' && this.swingJumps !== 1) this._drawMarker(ctx, p);
         }
       } else if (p.type === 'shoe') {
@@ -460,12 +624,58 @@ class Game {
 
     // ===== バレル描画（SWINGING 中・バレル装備時）=====
     if (this.save.equippedItems.includes('barrel') && this.launchType !== 'human') {
-      this._drawBarrel(ctx);
+      const R = this._getBarrelRadius();
+      const bx = this.pivotX + Math.cos(this.barrelAngle) * R;
+      const by = this.pivotY + Math.sin(this.barrelAngle) * R;
+      
+      this.character.drawBarrel(bx, by, this.barrelAngle, this.pendulum.length);
+      
+      // ガイド円（破線）
+      ctx.save();
+      ctx.strokeStyle = 'rgba(249, 115, 22, 0.22)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 8]);
+      ctx.beginPath();
+      ctx.arc(this.pivotX, this.pivotY, R, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
+      // ドラッグ中のハイライト
+      if (this.barrelDragging) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.7)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(bx, by, 24 * (this.pendulum.length / 200), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
       // ドラッグ中や角度変更時は UI (slider) を即座に同期
       if (this.barrelDragging) {
         this._syncBarrelUI();
       }
     }
+
+    // ===== パーティクル描画 =====
+    this.particles.forEach(p => {
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      if (p.type === 'text') {
+        ctx.fillStyle = p.color;
+        ctx.font = `bold ${p.size}px "Nunito", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 4;
+        ctx.fillText(p.text, p.x, p.y);
+      } else {
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    });
 
     ctx.restore(); // カメラ変換終了
 
@@ -652,67 +862,7 @@ class Game {
 
   // ===== バレル（砲台）描画 =====
   _drawBarrel(ctx) {
-    const R = this._getBarrelRadius();
-    const bx = this.pivotX + Math.cos(this.barrelAngle) * R;
-    const by = this.pivotY + Math.sin(this.barrelAngle) * R;
-
-    // ガイド円（破線）
-    ctx.save();
-    ctx.strokeStyle = 'rgba(251, 146, 60, 0.3)';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([8, 8]);
-    ctx.beginPath();
-    ctx.arc(this.pivotX, this.pivotY, R, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.restore();
-
-    // 砲台・砲身
-    ctx.save();
-    ctx.translate(bx, by);
-    ctx.rotate(this.barrelAngle);
-
-    // 砲台底部（灰色の円形台座）
-    ctx.fillStyle = '#334155';
-    ctx.beginPath();
-    ctx.arc(0, 0, 20, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#64748b';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // 砲身（外方向 = 右向きに伸びる長方形）
-    ctx.fillStyle = this.barrelDragging ? '#FBBF24' : '#F97316';
-    ctx.beginPath();
-    ctx.roundRect(-6, -10, 52, 20, 4);
-    ctx.fill();
-
-    // 発射方向の矢印
-    ctx.strokeStyle = '#FFD700';
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(46, 0);
-    ctx.lineTo(62, 0);
-    ctx.stroke();
-    ctx.fillStyle = '#FFD700';
-    ctx.beginPath();
-    ctx.moveTo(57, -7);
-    ctx.lineTo(68, 0);
-    ctx.lineTo(57, 7);
-    ctx.closePath();
-    ctx.fill();
-
-    // ドラッグ中のハイライトリング
-    if (this.barrelDragging) {
-      ctx.strokeStyle = 'rgba(251, 191, 36, 0.9)';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(0, 0, 24, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    ctx.restore();
+    // 描画は character.drawBarrel に移行しました
   }
 
   // ===== UI スライダーとの同期（ドラッグ操作を HTML 側に反映） =====

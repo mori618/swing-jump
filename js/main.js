@@ -26,6 +26,34 @@ document.addEventListener('DOMContentLoaded', () => {
   // ゲームインスタンスを生成する
   let game = new Game(canvas);
 
+  // ===== 音声ミュートボタン連動 =====
+  const btnMute = document.getElementById('btnMute');
+  if (btnMute) {
+    const updateMuteUI = (muted) => {
+      btnMute.textContent = muted ? '🔇' : '🔊';
+      if (muted) {
+        btnMute.classList.add('muted');
+      } else {
+        btnMute.classList.remove('muted');
+      }
+    };
+
+    // 初期化状態を反映
+    updateMuteUI(window.soundEngine.isMuted);
+
+    btnMute.addEventListener('click', (e) => {
+      e.stopPropagation(); // キャンバスのリセット等を防ぐ
+      const muted = window.soundEngine.toggleMute();
+      updateMuteUI(muted);
+      
+      if (!muted) {
+        window.soundEngine.startBGM();
+      } else {
+        window.soundEngine.stopBGM();
+      }
+    });
+  }
+
   // ショップUI初期化
   let shop = new ShopUI(game.save);
 
@@ -71,23 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btnPump.addEventListener('mousedown', onPumpStart);
     btnPump.addEventListener('mouseup', onPumpEnd);
     btnPump.addEventListener('mouseleave', onPumpEnd);
-  }
-
-  // ===== 「とばす！」ボタン（靴） =====
-  const btnLaunchShoe = document.getElementById('btnLaunchShoe');
-  if (btnLaunchShoe) {
-    const onLaunchShoe = (e) => {
-      e.preventDefault();
-      if (game.state === 'RESULT') {
-        game.reset();
-        return;
-      }
-      game.launch('shoe');
-      btnLaunchShoe.classList.add('pressed');
-      setTimeout(() => btnLaunchShoe.classList.remove('pressed'), 200);
-    };
-    btnLaunchShoe.addEventListener('touchstart', onLaunchShoe, { passive: false });
-    btnLaunchShoe.addEventListener('mousedown', onLaunchShoe);
   }
 
   // ===== 「とぶ！」ボタン（人間） =====
